@@ -1,13 +1,13 @@
-# HCV-Networks
-A repository of code I created for modelling HCV on networks. The majority of the work is done on implementing a Sellke Solver for 
+# Sellke-Simulator
+This repository contains a Sellke simulation for epidemics in general populaiton. Currently we only consider the scenario where contact occurs between every member of the population.
+
+The duration of infectious periods may be drawn from arbitrary distributions. We have implemented the Sellke formulation of epidemics. This is equivalent to saying:
+Time between contacts is exponentially distributed
+If an infectious person contacts a susceptible person, the probability of infection conditional upon the hazard rate of the infectious individual
+As such, the time until infection is a thinned process with time varying thinning
+
+# Notebooks
+We have several notebooks demostrating usage of the simulations.
 
 # Testing
-Code testing is performed using pytest
-
-#To Do List
-1****) Unit test all of the code thus far
-2) Set up Jenkins to test all of the code each day
-
-1) Implement Sellke on a network with constant force of infection
-2) Change the well-mixed population variant to have non-constant force of infection via ODE solver
-3) Implement the non-constant force of infection on a network via an ODE solver
+Code is tested using pytets and has a high coverage.
