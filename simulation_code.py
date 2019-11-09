@@ -1,6 +1,109 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
+import networkx as nx
+
+def generate_infection_periods(self,inf_period_dist = None, I_parameters = None):
+    '''
+    This method contains the logic required to handle change of infectious period distributions.
+    Defaults to choosing the exponential distribution if no other distribution is specified.
+    Different distributions have a different number of parameters passed to them 
+     
+    To Do:
+    Add some proper break variables to this whole business if we reach an error
+    Make the error messages better
+
+    The tests for this function are done by calling it via SIR_simple_sellke, cba writing a new set of tests
+    '''
+
+    self.inf_period_dist = inf_period_dist
+    self.I_parameters = I_parameters
+
+    if self.inf_period_dist is None:
+        if type(self.I_parameters) == int or type(self.I_parameters) == float:
+            self.inf_periods = np.random.exponential(self.I_parameters,self.N)
+        else:
+            print("Put something here to stop everything else going ahead because te parameters are not correct.")
+    else:
+        if type(self.I_parameters) == int or type(self.I_parameters) == float:
+            self.inf_periods = self.inf_period_dist(self.I_parameters, self.N)
+        elif len(self.I_parameters) == 2:
+            self.inf_periods = self.inf_period_dist(self.I_parameters[0]
+                                                ,self.I_parameters[1]
+                                                ,self.N)
+        elif len(self.I_parameters) == 3:
+            self.inf_periods = self.inf_period_dist(self.I_parameters[0]
+                                                ,self.I_parameters[1]
+                                                ,self.I_parameters[2]
+                                                ,self.N)
+        else:
+            print("There is something incorrect with the parameters.")
+
+    return(self.inf_periods)
+
+class hazard_class:
+    '''
+    This class handles all the calculations associated with hazard functions.
+
+    Particular duties include:
+    hazard rate evaluation
+    hazard rate integration
+    producing the cumulative hazrd vector
+    '''
+    
+    def __init__(self, hazard_function):
+        self.hazard_function = hazard_function
+
+    def hazard(self, t, t_end):
+        '''
+        A housekeeping variant of the hazard function.
+        Retuns 0 if t is less than 0, truncates to 0 after t_end
+        If no hazard rate was specified, returns 1 so the system defaults to exponential waiting times.
+        '''
+        self.t_end = t_end
+        if t < 0 or t > t_end:
+            return 0
+        elif self.hazard_function == None:
+            return(1)
+        else:
+            temp = self.hazard_function(t)
+            if temp < 0:
+                return 0
+            else:
+                return temp
+    
+    def total_hazard_function(self, t, T_endpoints):
+        '''
+        !Not in use!
+
+        Given a predefined hazard function, an input time, and the lengths of the infectious periods
+        The function caculates the rate at which the hazard is emitted at time t, assuming they were all intially infected
+
+        Designed as an input function for the BVP Solver, which doesn't currently work
+        '''
+        self.T_endpoints = T_endpoints
+        total_hazard_rate = 0
+        for i in range(len(T_endpoints)):
+            total_hazard_rate =  total_hazard_rate + self.hazard(t,T_endpoints[i])
+        return total_hazard_rate
+    
+    def integrate_hazard(self, t_end):
+        '''
+        Integrate a hazard function
+        '''
+        f = lambda t: self.hazard(t,t_end)
+        integral = spi.quad(f, 0, t_end)
+        return integral[0]
+    
+
+    
+    
+
+    
+
+    
+
+
 
 class SIR_Selke:
     '''
@@ -16,6 +119,13 @@ class SIR_Selke:
     Choosing a non-markovian distribution:
     If parameter infectious_period_distribution is left blank then we take it to be the exponential distribution
     In order to change the distribution to something non-markovian, pass the name of a numpy.random univariate function to the class
+
+    To Do:
+    Because we calculate all the total hazard contributions, this is slower than needs to be for large N.
+    Instead we could be faster and less memory heavy by only calculating them as we need them
+
+    To Do:
+    It should be possible to calculate the time of the infection from the data generated.
     '''
     
     #We use the init function to assign values to object that are necessary to do when the object is run
@@ -28,75 +138,10 @@ class SIR_Selke:
         self.hazard_rate = hazard_rate
         if self.inf_period_dist == None:
             print("Taking the exponential distribution of the length of the infectious periods.")
-        
+
     def generate_infection_periods(self):
-        '''
-        This method contains the logic required to handle change of infectious period distributions.
-        Defaults to choosing the exponential distribution if no other distribution is specified.
-        Different distributions have a different number of parameters passed to them 
-        
-        To Do:
-        Add some proper break variables to this whole business if we reach an error
-        Make the error messages better
-        '''
-        if self.inf_period_dist is None:
-            if type(self.I_parameters) == int or type(self.I_parameters) == float:
-                self.inf_periods = np.random.exponential(self.I_parameters,self.N)
-            else:
-                print("Put something here to stop everything else going ahead because te parametes are not correct.")
-        else:
-            if type(self.I_parameters) == int or type(self.I_parameters) == float:
-                self.inf_periods = self.inf_period_dist(self.I_parameters, self.N)
-            elif len(self.I_parameters) == 2:
-                self.inf_periods = self.inf_period_dist(self.I_parameters[0]
-                                                    ,self.I_parameters[1]
-                                                    ,self.N)
-            elif len(self.I_parameters) == 3:
-                self.inf_periods = self.inf_period_dist(self.I_parameters[0]
-                                                    ,self.I_parameters[1]
-                                                    ,self.I_parameters[2]
-                                                    ,self.N)
-            else:
-                print("There is something incorrect with the parameters.")
-            
-        return(self.inf_periods)
-    
-    def hazard(self, t, t_end):
-        '''A housekeeping variant of the hazard function.
-        Retuns 0 if t is less than 0, truncates to 0 after t_end
-        If no hazard rate was specified, returns 1 so the system defaults to exponential waiting times.
-        '''
-        
-        if t < 0 or t > t_end:
-            return 0
-        elif self.hazard_rate == None:
-            return(1)
-        else:
-            temp = self.hazard_rate(t)
-            if temp < 0:
-                return 0
-            else:
-                return temp
-
-    def total_hazard_function(self, t, T_ends):
-        '''
-        Given a predefined hazard function, an input time, and the lengths of the infectious periods
-        The function caculates the rate at which the hazard is emitted at time t, assuming they were all intially infected
-
-        Designed as an input function for the BVP Solver, which doesn't currently work
-        '''
-        total_hazard_rate = 0
-        for i in range(len(T_ends)):
-            total_hazard_rate =  total_hazard_rate + self.hazard(t,T_ends[i])
-        return total_hazard_rate
-
-    def integrate_hazard(self, t_end):
-        '''
-        Integrate a hazard function
-        '''
-        f = lambda t: self.hazard(t,t_end)
-        integral = spi.quad(f, 0, t_end)
-        return integral[0]
+        #There's a function that generates the infection periods as it is shared between several class objects
+        return(generate_infection_periods(self,self.inf_period_dist, self.I_parameters))
     
     def compute_final_size(self):
         '''Generates 1 observation of the final size of an epidemic from the parameters defined earlier'''
@@ -115,6 +160,8 @@ class SIR_Selke:
         ordering = np.argsort(self.Q)  #The vector that gives us the correct ordering, incase we want to use it later
         Q_sorted = self.Q[ordering]    #The sorted vector
 
+        hazards = hazard_class(self.hazard_rate)
+
         if self.hazard_rate == None:
             #Then we assume they emit hazard at a constant rate
             #As such, infection times are exponentially distributed
@@ -123,7 +170,7 @@ class SIR_Selke:
             #The hazard rate is more complicated
             cumulative_hazard = np.empty(self.N)
             for i in range(self.N):
-                cumulative_hazard[i] = self.integrate_hazard(T[i])
+                cumulative_hazard[i] = hazards.integrate_hazard(t_end = T[i])
             cumulative_hazard = self.beta * np.cumsum(cumulative_hazard)
         
         counter = 0
@@ -155,4 +202,63 @@ class SIR_Selke:
         self.plot = plt.hist(self.observations, bins = range(self.N))
         plt.hist(self.observations, bins = range(self.N), density = True)
         plt.title(f'Final epidemic size of {self.n_sim} observations')
+
+
+
+class sir_network_sellke_simple:
+    '''
+    This is the class we use to simulate Sellke on a network
+
+    I think it's possible to run this by calling the existing sellke code
+
+    If you think about it, when we determine whether a susceptible node becomes infected, we are consider the sellke general population problem
+    with 1 susceptible and the number of initial infected equal to the number of infected connected via edge
+    You know they got infected if he final size of the epidemic is 1 greater than the initial starting size.
+
+    Alternatively, when a node gets infected, we immediately calculate their total hazard contribution.
+
+    This way, when we calculate whether a susceptible becomes infected we can simply sum over the infected neighbours.
+
+    ::Inputs::
+    G a network x graph object
+    '''
+
+    def __init__(self, G, beta, I_parameters, infected_started, hazard_rate = None, infection_period_distribution = None):
+        self.G = G
+        self.beta = beta
+        self.inf_starting = infected_started
+        self.I_parameters = I_parameters
+        self.inf_period_dist = infection_period_distribution
+        self.hazard_rate = hazard_rate
+        self.N = nx.number_of_nodes(self.G)
+        self.node_list = range(self.N)
+        if self.inf_period_dist == None:
+            print("Taking the exponential distribution of the length of the infectious periods.")
+
+    def initialise_infection(self):
+        '''
+        Chooses a random set of nodes to be infected.
+
+        if an array of integers is passed, then the set of nodes specified
+        is taken to be the starting set of infected.
+        '''
+
+        if type(self.inf_starting == int):
+            #assert self.inf_starting > 0
+            #assert self.inf_starting < self.N
+            starters = np.random.choice(self.node_list, replace = False, size = self.inf_starting)
+            self.infected_nodes = starters
+            return(self.infected_nodes)
         
+        elif type(self.inf_starting) == list:
+            self.infected_nodes = self.inf_starting
+        
+        else:
+            raise ValueError ("Data for infected start is not an integer or a correclty sized vector")
+    
+
+    def generate_infection_periods(self):
+        #There's a function that generates the infection periods as it is shared between several class objects
+        return(generate_infection_periods(self.inf_period_dist, self.I_parameters))
+    
+

@@ -1,4 +1,5 @@
 from simulation_code import SIR_Selke
+from simulation_code import hazard_class
 import numpy.random as npr
 import numpy as np
 import pytest
@@ -74,56 +75,60 @@ def test_repeated_sim():
     simulation.sim_final_size(2)
 
 def test_hazard_well_behaved():
-    '''Tests for out of bounds behaviour'''
-    
-    def my_hazard(t): return 4*t
-    simulation = SIR_Selke(200, 0.008, 1, 5, hazard_rate= my_hazard)
-
+    '''
+    Tests for out of bounds behaviour
+    negative time value returns
+    valid time value returns correct value
+    time value after the end time point returns 0 
+    '''
+    def my_hazard_fn(t): return 4*t
+    my_hazard = hazard_class(hazard_function= my_hazard_fn)
     t_end = 10
-    assert simulation.hazard(-1,t_end) == 0
-    assert simulation.hazard(1,t_end) == 4
-    assert simulation.hazard(11,t_end) == 0
+    assert my_hazard.hazard(-1,t_end) == 0
+    assert my_hazard.hazard(1,t_end) == 4
+    assert my_hazard.hazard(11,t_end) == 0
 
-    def my_hazard_1(t): return -t
-    simulation = SIR_Selke(200, 0.008, 1, 5, hazard_rate = my_hazard_1)
-    assert simulation.hazard(1,10) == 0
+def test_negative_hazard_func():
+    '''
+    Checks that the hazard class maps negative values to 0.
+    Negative hazard does not make sense
+    '''
+    def my_hazard_fn(t): return -t
+    my_hazard = hazard_class(hazard_function= my_hazard_fn)
+    assert my_hazard.hazard(1,10) == 0
 
 def test_total_hazard_function():
     '''
-    The total hazard function sums several individual hazard functions.
-    The required inputs are the lengths of infection periods of the infected set
+    The total hazard function is the sum of several hazard functions of individuals
+    with all times starting at 0.
+    The required inputs are:
+    list of lengths of infection periods
+
     '''
     
-    T_lengths = [1,2]
-    def my_hazard(t): return 4*t
-    simulation = SIR_Selke(200, 0.008, 1, 5, hazard_rate= my_hazard)
+    infection_lengths = [1,2]
+    def my_hazard_fn(t): return 4*t
+    my_hazard = hazard_class(hazard_function = my_hazard_fn)
 
     #tests that it returns 0
-    t_in = -1
-    chf = simulation.total_hazard_function(t_in, T_lengths)
-    assert chf == 0
+    assert my_hazard.total_hazard_function(-1, infection_lengths) == 0
 
     #tests that both hazards are active
     t_in = 0.5
-    chf = simulation.total_hazard_function(t_in, T_lengths)
-    assert chf == 4
+    assert my_hazard.total_hazard_function(0.5, infection_lengths) == 4
 
     #Tests the first cut off has happened
-    t_in = 1.5
-    chf = simulation.total_hazard_function(t_in, T_lengths)
-    assert chf == 6
+    assert my_hazard.total_hazard_function(1.5, infection_lengths) == 6
 
     #Tests that the cut off has happened at t = 2
-    t_in = 2.5
-    chf = simulation.total_hazard_function(t_in, T_lengths)
-    assert chf == 0
+    assert my_hazard.total_hazard_function(2.5, infection_lengths) == 0
 
 def test_hazard_integral():
     '''tests the hazard integrator against a predetermined value'''
 
     def my_hazard(t): return 4*t
-    simulation = SIR_Selke(200, 0.008, 1, 5, hazard_rate = my_hazard)
-    assert simulation.integrate_hazard(10) == 200
+    my_hazard = hazard_class(hazard_function = my_hazard)
+    assert my_hazard.integrate_hazard(10) == 200
 
 def test_final_size_using_hazard_function():
     '''
@@ -140,6 +145,6 @@ def test_final_size_using_hazard_function():
     simulation = SIR_Selke(200, 0.008, 1, 5)
     test_var_2 = simulation.compute_final_size()
 
-    assert test_var_1 == test_var_2a\z\
+    assert test_var_1 == test_var_2
 
 
