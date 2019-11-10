@@ -1,5 +1,5 @@
-from simulation_code import SIR_Selke
-from simulation_code import hazard_class
+from SellkeSimulation.simulation_code import SIR_Selke
+from SellkeSimulation.simulation_code import hazard_class
 import numpy.random as npr
 import numpy as np
 import pytest

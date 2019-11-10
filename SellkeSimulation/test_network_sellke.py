@@ -2,7 +2,7 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from simulation_code import sir_network_sellke_simple
+from SellkeSimulation.simulation_code import sir_network_sellke_simple
 import pytest
 
 G_test = nx.complete_graph(200)
