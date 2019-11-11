@@ -12,6 +12,6 @@ setup(
    packages=['SellkeSimulation'],  #same as name
    install_requires=['networkx', 'numpy', 'scipy', 'matplotlib'], #external packages as dependencies
    scripts=[
-            'SellkeSimulation/simulation_code'
+            'SellkeSimulation/simulation_code.py'
            ]
 )
