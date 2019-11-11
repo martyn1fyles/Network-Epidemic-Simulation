@@ -10,7 +10,7 @@ setup(
    #author_email='foomail@foo.com',
    #url="http://www.foopackage.com/",
    packages=['SellkeSimulation'],  #same as name
-   install_requires=['networkx', 'numpy', 'scipy', 'matplotlib'], #external packages as dependencies
+   install_requires=['networkx', 'numpy', 'scipy', 'matplotlib', 'pytest'], #external packages as dependencies
    scripts=[
             'SellkeSimulation/simulation_code.py'
            ]
