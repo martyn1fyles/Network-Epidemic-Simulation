@@ -103,3 +103,9 @@ def test_iterate_epidemic():
     test_copy.iterate_epidemic()
     assert test_copy.final_size == 10
     assert test_copy.iterations == 1
+
+def test_iterate_epidemic_real_epidemic():
+    npr.seed(1)
+    my_epidemic = sir_network_sellke_simple(G_test,beta = 0.008, I_parameters = 1.5, infected_started = [1])
+    my_epidemic.iterate_epidemic()
+    assert my_epidemic.iterations > 1

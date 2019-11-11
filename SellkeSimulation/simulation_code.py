@@ -92,16 +92,6 @@ class hazard_class:
         f = lambda t: self.hazard(t,t_end)
         integral = spi.quad(f, 0, t_end)
         return integral[0]
-    
-
-    
-    
-
-    
-
-    
-
-
 
 class SIR_Selke:
     '''
@@ -152,7 +142,7 @@ class SIR_Selke:
                                   size = self.N)
         
         #We take the formulation found in the Thomas House paper and set the intial infecteds to zero
-        self.Q[ :self.inf_starting] = 0
+        self.Q[ :(self.inf_starting-1)] = 0
         
         #The ordering
         ordering = np.argsort(self.Q)  #The vector that gives us the correct ordering, incase we want to use it later
@@ -230,8 +220,8 @@ class sir_network_sellke_simple:
         self.hazard_rate = hazard_rate
         self.N = nx.number_of_nodes(self.G)
         self.node_list = range(self.N)
-        if self.inf_period_dist == None:
-            print("Taking the exponential distribution of the length of the infectious periods.")
+        #if self.inf_period_dist == None:
+        #    print(f"Taking the exponential distribution for the distribution of the lengths of the infectious periods, with scale parameter = {I.parameters}")
         self.initialise_infection()
         self.generate_infection_periods()
         self.calculate_total_emitted_hazard()
@@ -253,7 +243,7 @@ class sir_network_sellke_simple:
             return(self.infected_nodes)
         
         elif type(self.inf_starting) == list:
-            self.infected_nodes = self.inf_starting
+            self.infected_nodes = self.inf_starting[:]
         
         else:
             raise ValueError ("Data for infected start is not an integer or a correclty sized vector")
@@ -269,7 +259,7 @@ class sir_network_sellke_simple:
         #self.generate_infection_periods()
         haz = hazard_class(self.hazard_rate)
 
-        self.cumulative_node_hazard = [haz.integrate_hazard(length) for length in self.infectious_periods]
+        self.cumulative_node_hazard = [self.beta * haz.integrate_hazard(length) for length in self.infectious_periods]
 
     def compute_exposure_levels(self):
         """Calculates how much hazard a node is being exposed to.
@@ -277,7 +267,6 @@ class sir_network_sellke_simple:
         """
         
         self.exposure_level = [0]*self.N
-        self.calculate_total_emitted_hazard()
 
         for node in self.infected_nodes:
             connected_nodes = self.G.neighbors(node)
@@ -301,7 +290,7 @@ class sir_network_sellke_simple:
         """
         Control structure for looping the epidemic until it completes.
         """
-        previously_infected = self.infected_nodes
+        previously_infected = self.infected_nodes[:]
         epidemic_ended = False
         self.iterations = 0
         while epidemic_ended == False:
@@ -309,5 +298,6 @@ class sir_network_sellke_simple:
             self.update_infected_status()
             if previously_infected == self.infected_nodes:
                 epidemic_ended = True
+            previously_infected = self.infected_nodes[:]
         self.final_size = len(self.infected_nodes)
 
