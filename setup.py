@@ -12,10 +12,9 @@ setup(
    #author='Man Foo',
    #author_email='foomail@foo.com',
    #url="http://www.foopackage.com/",
-   packages=['foo'],  #same as name
-   install_requires=['bar', 'greek'], #external packages as dependencies
+   packages=['SellkeSimulation'],  #same as name
+   install_requires=['networkx', 'numpy', 'scipy', 'matplotlib'], #external packages as dependencies
    scripts=[
-            'scripts/cool',
-            'scripts/skype',
+            'SellkeSimulation/simulation_code'
            ]
 )
