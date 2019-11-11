@@ -6,11 +6,21 @@ from SellkeSimulation.simulation_code import sir_network_sellke_simple
 
 G_test = nx.complete_graph(200)
 
+def fixed_length(para,n): return [5]*n
+
 test_sim_2 = sir_network_sellke_simple(G = G_test,
     beta = 0.008,
     I_parameters = 1.5,
     infected_started = [0,1,2,3,4],
     infection_period_distribution = fixed_length)
+
+test_copy = test_sim_2
+test_copy.resistance = [4]*10
+test_copy.resistance.extend([100]*190)
+
+test_copy_2 = test_sim_2
+test_copy.resistance = [4]*10
+test_copy.resistance.extend([100]*190)
 
 def test_initialise_infection():
     #Test that the infection is initialised correctly in the network
@@ -43,7 +53,6 @@ def test_infectious_period_generation():
     simulation_class.generate_infection_periods()
     assert 4==4
 
-def fixed_length(para,n): return [5]*n
 
 def test_cumulative_hazards():
     """
@@ -76,14 +85,21 @@ def test_cumulative_exposure():
     expected_answer.extend([25.0]*195)
     assert sim.exposure_level == expected_answer
 
-def test_update_infection():
+def test_update_infected_status():
     """
     Tests the update infection status methodis correctly updating.
     We set the resistance low for the first 10 nodes (including the first 5 which are initially infected)
     We expect to see the first 10 to be infected, and no more.
     """
+    
     test_copy = test_sim_2
-    test_copy.resistance = [4]*10
-    test_copy.resistance.extend([100]*190)
     test_copy.update_infected_status()
     assert test_copy.infected_nodes == list(range(10))
+
+def test_iterate_epidemic():
+    """Tests the control structure for iterating epidemics.
+    """
+    test_copy = test_sim_2
+    test_copy.iterate_epidemic()
+    assert test_copy.final_size == 10
+    assert test_copy.iterations == 1

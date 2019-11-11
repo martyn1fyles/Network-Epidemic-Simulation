@@ -290,15 +290,24 @@ class sir_network_sellke_simple:
         """
         The infected list gets updated based upon their exposure level.
         """
-        susceptible_nodes = list(range(self.N))
-        susceptible_nodes.remove(self.infected_nodes)
+        #Loops over all nodes which isn't terribly efficient.
+        self.compute_exposure_levels()
+        all_nodes = list(range(self.N))
+        for node in all_nodes:
+            if node not in self.infected_nodes and self.exposure_level[node] > self.resistance[node]:
+                self.infected_nodes.append(node)
+    
+    def iterate_epidemic(self):
+        """
+        Control structure for looping the epidemic until it completes.
+        """
+        previously_infected = self.infected_nodes
+        epidemic_ended = False
+        self.iterations = 0
+        while epidemic_ended == False:
+            self.iterations += 1
+            self.update_infected_status()
+            if previously_infected == self.infected_nodes:
+                epidemic_ended = True
+        self.final_size = len(self.infected_nodes)
 
-        for susceptible in susceptible_nodes:
-            if self.exposure_level[susceptible] > self.resistance[susceptible]:
-                self.infected_nodes.append(susceptible)
-        
-        
-
-
-
-        
