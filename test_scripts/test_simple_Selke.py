@@ -124,7 +124,6 @@ def test_total_hazard_function():
     assert my_hazard.total_hazard_function(-1, infection_lengths) == 0
 
     #tests that both hazards are active
-    t_in = 0.5
     assert my_hazard.total_hazard_function(0.5, infection_lengths) == 4
 
     #Tests the first cut off has happened

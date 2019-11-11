@@ -15,7 +15,6 @@ def generate_infection_periods(self,inf_period_dist = None, I_parameters = None)
 
     The tests for this function are done by calling it via SIR_simple_sellke, cba writing a new set of tests
     '''
-
     self.inf_period_dist = inf_period_dist
     self.I_parameters = I_parameters
 
@@ -38,7 +37,6 @@ def generate_infection_periods(self,inf_period_dist = None, I_parameters = None)
                                                 ,self.N)
         else:
             print("There is something incorrect with the parameters.")
-
     return(self.inf_periods)
 
 class hazard_class:
@@ -234,6 +232,10 @@ class sir_network_sellke_simple:
         self.node_list = range(self.N)
         if self.inf_period_dist == None:
             print("Taking the exponential distribution of the length of the infectious periods.")
+        self.initialise_infection()
+        self.generate_infection_periods()
+        self.calculate_total_emitted_hazard()
+        self.resistance = np.random.exponential(1, size = self.N)
 
     def initialise_infection(self):
         '''
@@ -243,7 +245,7 @@ class sir_network_sellke_simple:
         is taken to be the starting set of infected.
         '''
 
-        if type(self.inf_starting == int):
+        if type(self.inf_starting) == int:
             #assert self.inf_starting > 0
             #assert self.inf_starting < self.N
             starters = np.random.choice(self.node_list, replace = False, size = self.inf_starting)
@@ -259,6 +261,44 @@ class sir_network_sellke_simple:
 
     def generate_infection_periods(self):
         #There's a function that generates the infection periods as it is shared between several class objects
-        return(generate_infection_periods(self.inf_period_dist, self.I_parameters))
+        self.infectious_periods = generate_infection_periods(self, self.inf_period_dist, self.I_parameters)
     
+    def calculate_total_emitted_hazard(self):
+        """For every node in the network, we calculate the total hazard emitted if they were infected.
+        """
+        #self.generate_infection_periods()
+        haz = hazard_class(self.hazard_rate)
 
+        self.cumulative_node_hazard = [haz.integrate_hazard(length) for length in self.infectious_periods]
+
+    def compute_exposure_levels(self):
+        """Calculates how much hazard a node is being exposed to.
+        We iterate over the infected set.
+        """
+        
+        self.exposure_level = [0]*self.N
+        self.calculate_total_emitted_hazard()
+
+        for node in self.infected_nodes:
+            connected_nodes = self.G.neighbors(node)
+            emitted_hazard = self.cumulative_node_hazard[node]
+
+            for exposed_node in connected_nodes:
+                self.exposure_level[exposed_node] = self.exposure_level[exposed_node] + emitted_hazard
+        
+    def update_infected_status(self):
+        """
+        The infected list gets updated based upon their exposure level.
+        """
+        susceptible_nodes = list(range(self.N))
+        susceptible_nodes.remove(self.infected_nodes)
+
+        for susceptible in susceptible_nodes:
+            if self.exposure_level[susceptible] > self.resistance[susceptible]:
+                self.infected_nodes.append(susceptible)
+        
+        
+
+
+
+        
