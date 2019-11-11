@@ -1,8 +1,5 @@
 from setuptools import setup
 
-with open("README", 'r') as f:
-    long_description = f.read()
-
 setup(
    name='SellkeSimulation',
    version='alpha',
