@@ -25,4 +25,5 @@ install:
 # command to run tests
 script:
   - conda activate
+  - python setup.py install
   - pytest
