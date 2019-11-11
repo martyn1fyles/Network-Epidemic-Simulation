@@ -6,7 +6,7 @@ Time between contacts is exponentially distributed
 If an infectious person contacts a susceptible person, the probability of infection conditional upon the hazard rate of the infectious individual
 As such, the time until infection is a thinned process with time varying thinning.
 
-##Project Structure
+[![Build Status](https://travis-ci.org/martyn1fyles/Sellke-Networks.svg?branch=master)](https://travis-ci.org/martyn1fyles/Sellke-Networks)
 
 # Notebooks
 We have several notebooks demostrating usage of the simulations.
