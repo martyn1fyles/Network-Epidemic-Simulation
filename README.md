@@ -7,6 +7,7 @@ If an infectious person contacts a susceptible person, the probability of infect
 As such, the time until infection is a thinned process with time varying thinning.
 
 [![Build Status](https://travis-ci.org/martyn1fyles/Sellke-Networks.svg?branch=master)](https://travis-ci.org/martyn1fyles/Sellke-Networks)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/martyn1fyles/Sellke-Networks/master)
 
 # Notebooks
 We have several notebooks demostrating usage of the simulations.
