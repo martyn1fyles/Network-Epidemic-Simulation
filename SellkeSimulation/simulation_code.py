@@ -215,17 +215,18 @@ class sir_network_sellke_simple:
 
     def __init__(self, G, beta, I_parameters, infected_started, hazard_rate = None, infection_period_distribution = None):
         self.G = G
+        self.node_list = list(G.nodes())
         self.beta = beta
         self.inf_starting = infected_started
         self.I_parameters = I_parameters
         self.inf_period_dist = infection_period_distribution
         self.hazard_rate = hazard_rate
         self.N = nx.number_of_nodes(self.G)
-        self.node_list = range(self.N)
         self.initialise_infection()
         self.generate_infection_periods()
         self.calculate_total_emitted_hazard()
         self.resistance = np.random.exponential(1, size = self.N)
+        
 
     def initialise_infection(self):
         '''
@@ -236,8 +237,9 @@ class sir_network_sellke_simple:
         '''
 
         if type(self.inf_starting) == int:
-            starters = np.random.choice(self.node_list, replace = False, size = self.inf_starting)
-            self.infected_nodes = starters
+            list_index = list(range(self.N))
+            starters = np.random.choice(list_index, replace = False, size = self.inf_starting)
+            self.infected_nodes = [self.node_list[i] for i in starters]
             return(self.infected_nodes)
         
         elif type(self.inf_starting) == list:
@@ -268,10 +270,12 @@ class sir_network_sellke_simple:
 
         for node in self.infected_nodes:
             connected_nodes = self.G.neighbors(node)
-            emitted_hazard = self.cumulative_node_hazard[node]
+            node_index = self.node_list.index(node)
+            emitted_hazard = self.cumulative_node_hazard[node_index]
 
             for exposed_node in connected_nodes:
-                self.exposure_level[exposed_node] = self.exposure_level[exposed_node] + emitted_hazard
+                exposed_node_index = self.node_list.index(exposed_node)
+                self.exposure_level[exposed_node_index] = self.exposure_level[exposed_node_index] + emitted_hazard
         
     def update_infected_status(self):
         """
@@ -279,9 +283,10 @@ class sir_network_sellke_simple:
         """
         #Loops over all nodes which isn't terribly efficient.
         self.compute_exposure_levels()
-        all_nodes = list(range(self.N))
-        for node in all_nodes:
-            if node not in self.infected_nodes and self.exposure_level[node] > self.resistance[node]:
+        for node in self.node_list:
+
+            node_index = self.node_list.index(node)
+            if node not in self.infected_nodes and self.exposure_level[node_index] > self.resistance[node_index]:
                 self.infected_nodes.append(node)
     
     def iterate_epidemic(self):

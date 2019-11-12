@@ -112,3 +112,41 @@ def test_iterate_epidemic_real_epidemic():
     my_epidemic = sir_network_sellke_simple(G_test,beta = 0.008, I_parameters = 1.5, infected_started = [1])
     my_epidemic.iterate_epidemic()
     assert my_epidemic.iterations > 1
+
+def test_node_list_complex():
+    """For some graphs, i.e; a lattice where nodes are named using lists. We cannot refer to them numerically, so we have more advanced logic to handle this.
+    """
+    G_test_lattice = nx.grid_2d_graph(1,1)
+    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 0.008, I_parameters = 1.5, infected_started = 1)
+    my_epidemic.iterate_epidemic()
+    assert my_epidemic.final_size == 1
+    assert my_epidemic.iterations == 1
+
+def test_complex_node_list_iteration():
+    """We check that the iteration can be successfully performed over a complex node list
+    """
+    G_test_lattice = nx.grid_2d_graph(2,2)
+    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 100, I_parameters = 1, infected_started = 1)
+    my_epidemic.iterate_epidemic()
+    assert my_epidemic.final_size == 4
+    assert my_epidemic.iterations == 3
+
+def test_complex_node_list_iteration_larger_network():
+    """We check that the iteration can be successfully performed over a complex node list
+    """
+    G_test_lattice = nx.grid_2d_graph(10,10)
+    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 100, I_parameters = 1, infected_started = 1)
+    my_epidemic.iterate_epidemic()
+    assert my_epidemic.final_size > 4
+    assert my_epidemic.iterations > 3
+
+"""
+def test_initialise_with_list_node():
+    """We check that the iteration can be successfully performed over a complex node list
+    """
+    G_test_lattice = nx.grid_2d_graph(10,10)
+    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 100, I_parameters = 1, infected_started = (1,1))
+    my_epidemic.iterate_epidemic()
+    assert my_epidemic.final_size > 4
+    assert my_epidemic.iterations > 3
+    """
