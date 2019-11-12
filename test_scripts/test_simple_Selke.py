@@ -54,12 +54,9 @@ def test_final_size_calculation():
     #Generated the infection periods
     npr.seed(1)
     T = simulation.generate_infection_periods()
-    #Generate 200 infection resistances
-    #Set the first 5 to 0 to represent the initially infected
-    #Sort to determine order of infection
-    #Determine cumulative FOI
     res_to_inf = npr.exponential(1,200)
-    res_to_inf[:5] = 0
+    #There is a 4 here because python starts counting at zero, so this sets the first 5 to 0.
+    res_to_inf[:4] = 0
     res_to_inf = np.sort(res_to_inf)
     total_force_of_infection = 0.008*np.cumsum(T)
 

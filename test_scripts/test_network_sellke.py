@@ -19,7 +19,7 @@ test_copy.resistance = [4]*10
 test_copy.resistance.extend([100]*190)
 
 test_copy_2 = test_sim_2
-test_copy.resistance = [4]*10
+test_copy.resistance = [0.039]*10
 test_copy.resistance.extend([100]*190)
 
 def test_initialise_infection():
@@ -64,7 +64,7 @@ def test_cumulative_hazards():
         infected_started = 5,
         infection_period_distribution = fixed_length)
     sim.calculate_total_emitted_hazard()
-    expected_answer = [5] * 200
+    expected_answer = [5*0.008] * 200
     assert expected_answer == sim.cumulative_node_hazard
 
 
@@ -81,8 +81,11 @@ def test_cumulative_exposure():
         infection_period_distribution = fixed_length)
     sim.compute_exposure_levels()
 
-    expected_answer = [20.0]*5
-    expected_answer.extend([25.0]*195)
+    #fixed lengh dist returns an infectious period of length 5
+    #There are 5 infected, so each infected receives beta times 5 units of exposure
+    expected_answer = [4*0.008*5]*5
+    #There for the uninfected, 
+    expected_answer.extend([5*0.008*5]*195)
     assert sim.exposure_level == expected_answer
 
 def test_update_infected_status():
@@ -96,7 +99,7 @@ def test_update_infected_status():
     test_copy.update_infected_status()
     assert test_copy.infected_nodes == list(range(10))
 
-def test_iterate_epidemic():
+def test_iterate_epidemic_successfully():
     """Tests the control structure for iterating epidemics.
     """
     test_copy = test_sim_2
