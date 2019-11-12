@@ -1,0 +1,9 @@
+name: test-environment
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - pytest
+  - matplotlib
+  - scipy
+  - networkx
