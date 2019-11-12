@@ -2,7 +2,7 @@ from SellkeSimulation.simulation_code import SIR_Selke
 from SellkeSimulation.simulation_code import hazard_class
 import numpy.random as npr
 import numpy as np
-
+from pytest import raises
 print("Hello World")
 
 def test_the_testers():
@@ -44,8 +44,10 @@ def test_data_gen_non_markovian_int_parameter():
     test_var2 = npr.exponential(1, 200)
     assert all(test_var2 == test_var)
 
-#def test_error_unless_pos_distribution():
-    #simulation = SIR_Selke(200, 0.008, 1, 5, non_markovian_dist = npr.normal)
+def test_error_unless_pos_distribution():
+    simulation = SIR_Selke(200, 0.008, [1,1], 5, infection_period_distribution = npr.normal)
+    with raises(ValueError):
+        simulation.generate_infection_periods()
 
 def test_final_size_calculation():
     #Tests the calculation of the final size epidemic against the manually calculated value

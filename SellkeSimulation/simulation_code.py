@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import networkx as nx
 
-def generate_infection_periods(self,inf_period_dist = None, I_parameters = None):
+def generate_infection_periods(self,inf_period_dist = None, I_parameters = None, N = None):
     '''
     This method contains the logic required to handle change of infectious period distributions.
     Defaults to choosing the exponential distribution if no other distribution is specified.
@@ -37,6 +37,8 @@ def generate_infection_periods(self,inf_period_dist = None, I_parameters = None)
                                                 ,self.N)
         else:
             print("There is something incorrect with the parameters.")
+    if any(self.inf_periods < 0):
+        raise ValueError("Negative values for length of infectious period detected. Ensure use of a positive distribution.")
     return(self.inf_periods)
 
 class hazard_class:
@@ -220,8 +222,6 @@ class sir_network_sellke_simple:
         self.hazard_rate = hazard_rate
         self.N = nx.number_of_nodes(self.G)
         self.node_list = range(self.N)
-        #if self.inf_period_dist == None:
-        #    print(f"Taking the exponential distribution for the distribution of the lengths of the infectious periods, with scale parameter = {I.parameters}")
         self.initialise_infection()
         self.generate_infection_periods()
         self.calculate_total_emitted_hazard()
@@ -236,8 +236,6 @@ class sir_network_sellke_simple:
         '''
 
         if type(self.inf_starting) == int:
-            #assert self.inf_starting > 0
-            #assert self.inf_starting < self.N
             starters = np.random.choice(self.node_list, replace = False, size = self.inf_starting)
             self.infected_nodes = starters
             return(self.infected_nodes)

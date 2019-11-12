@@ -6,7 +6,7 @@ from SellkeSimulation.simulation_code import sir_network_sellke_simple
 
 G_test = nx.complete_graph(200)
 
-def fixed_length(para,n): return [5]*n
+def fixed_length(para,n): return np.array([5]*n)
 
 test_sim_2 = sir_network_sellke_simple(G = G_test,
     beta = 0.008,
