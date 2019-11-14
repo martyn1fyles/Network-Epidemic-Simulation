@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import networkx as nx
+from .EpidemicSimulation import epidemic_data
+
 
 def generate_infection_periods(self,inf_period_dist = None, I_parameters = None, N = None):
     '''
@@ -193,9 +195,7 @@ class SIR_Selke:
         plt.hist(self.observations, bins = range(self.N), density = True)
         plt.title(f'Final epidemic size of {self.n_sim} observations')
 
-
-
-class sir_network_sellke_simple:
+class sir_network_sellke_simple(epidemic_data):
     '''
     This is the class we use to simulate Sellke on a network
 
@@ -215,7 +215,7 @@ class sir_network_sellke_simple:
 
     def __init__(self, G, beta, I_parameters, infected_started, hazard_rate = None, infection_period_distribution = None):
         self.G = G
-        self.node_list = list(G.nodes())
+        self.node_keys = list(G.nodes())
         self.beta = beta
         self.inf_starting = infected_started
         self.I_parameters = I_parameters
@@ -226,7 +226,9 @@ class sir_network_sellke_simple:
         self.generate_infection_periods()
         self.calculate_total_emitted_hazard()
         self.resistance = np.random.exponential(1, size = self.N)
-        
+        self.
+    
+
 
     def initialise_infection(self):
         '''
@@ -239,7 +241,7 @@ class sir_network_sellke_simple:
         if type(self.inf_starting) == int:
             list_index = list(range(self.N))
             starters = np.random.choice(list_index, replace = False, size = self.inf_starting)
-            self.infected_nodes = [self.node_list[i] for i in starters]
+            self.infected_nodes = [self.node_keys[i] for i in starters]
             return(self.infected_nodes)
         
         elif type(self.inf_starting) == list:
@@ -270,11 +272,11 @@ class sir_network_sellke_simple:
 
         for node in self.infected_nodes:
             connected_nodes = self.G.neighbors(node)
-            node_index = self.node_list.index(node)
+            node_index = self.node_keys.index(node)
             emitted_hazard = self.cumulative_node_hazard[node_index]
 
             for exposed_node in connected_nodes:
-                exposed_node_index = self.node_list.index(exposed_node)
+                exposed_node_index = self.node_keys.index(exposed_node)
                 self.exposure_level[exposed_node_index] = self.exposure_level[exposed_node_index] + emitted_hazard
         
     def update_infected_status(self):
@@ -283,15 +285,15 @@ class sir_network_sellke_simple:
         """
         #Loops over all nodes which isn't terribly efficient.
         self.compute_exposure_levels()
-        for node in self.node_list:
+        for node in self.node_keys:
 
-            node_index = self.node_list.index(node)
+            node_index = self.node_keys.index(node)
             if node not in self.infected_nodes and self.exposure_level[node_index] > self.resistance[node_index]:
                 self.infected_nodes.append(node)
     
     def iterate_epidemic(self):
         """
-        Control structure for looping the epidemic until it completes.
+        Control structure for looping the epidemic until it completes. Only useful for estimating the final size of an SIR epidemic.
         """
         previously_infected = self.infected_nodes[:]
         epidemic_ended = False
@@ -303,4 +305,4 @@ class sir_network_sellke_simple:
                 epidemic_ended = True
             previously_infected = self.infected_nodes[:]
         self.final_size = len(self.infected_nodes)
-
+        
