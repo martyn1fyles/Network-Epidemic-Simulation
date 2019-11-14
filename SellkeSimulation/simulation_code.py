@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import networkx as nx
-from .EpidemicSimulation import epidemic_data
+from SellkeSimulation.EpidemicSimulation import epidemic_data
 
 
 def generate_infection_periods(self,inf_period_dist = None, I_parameters = None, N = None):
@@ -121,10 +121,10 @@ class SIR_Selke:
     '''
     
     #We use the init function to assign values to object that are necessary to do when the object is run
-    def __init__(self, N, beta, I_parameters, infected_started, hazard_rate = None, infection_period_distribution = None):
+    def __init__(self, N, beta, I_parameters, initial_infected, hazard_rate = None, infection_period_distribution = None):
         self.N = N
         self.beta = beta
-        self.inf_starting = infected_started
+        self.inf_starting = initial_infected
         self.I_parameters = I_parameters
         self.inf_period_dist = infection_period_distribution
         self.hazard_rate = hazard_rate
@@ -195,7 +195,7 @@ class SIR_Selke:
         plt.hist(self.observations, bins = range(self.N), density = True)
         plt.title(f'Final epidemic size of {self.n_sim} observations')
 
-class sir_network_sellke_simple(epidemic_data):
+class complex_epidemic_simulation(epidemic_data):
     '''
     This is the class we use to simulate Sellke on a network
 
@@ -213,42 +213,19 @@ class sir_network_sellke_simple(epidemic_data):
     G a network x graph object
     '''
 
-    def __init__(self, G, beta, I_parameters, infected_started, hazard_rate = None, infection_period_distribution = None):
+    def __init__(self, G, beta, I_parameters, initial_infected, hazard_rate = None, infection_period_distribution = None):
         self.G = G
         self.node_keys = list(G.nodes())
         self.beta = beta
-        self.inf_starting = infected_started
+        self.inf_starting = initial_infected
         self.I_parameters = I_parameters
         self.inf_period_dist = infection_period_distribution
         self.hazard_rate = hazard_rate
         self.N = nx.number_of_nodes(self.G)
-        self.initialise_infection()
+        self.data_structure = epidemic_data(G, initial_infected)
         self.generate_infection_periods()
         self.calculate_total_emitted_hazard()
         self.resistance = np.random.exponential(1, size = self.N)
-        self.
-    
-
-
-    def initialise_infection(self):
-        '''
-        Chooses a random set of nodes to be infected.
-
-        if an array of integers is passed, then the set of nodes specified
-        is taken to be the starting set of infected.
-        '''
-
-        if type(self.inf_starting) == int:
-            list_index = list(range(self.N))
-            starters = np.random.choice(list_index, replace = False, size = self.inf_starting)
-            self.infected_nodes = [self.node_keys[i] for i in starters]
-            return(self.infected_nodes)
-        
-        elif type(self.inf_starting) == list:
-            self.infected_nodes = self.inf_starting[:]
-        
-        else:
-            raise ValueError ("Data for infected start is not an integer or a correclty sized vector")
     
 
     def generate_infection_periods(self):

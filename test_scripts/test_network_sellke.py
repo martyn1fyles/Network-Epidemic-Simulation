@@ -2,16 +2,16 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from SellkeSimulation.simulation_code import sir_network_sellke_simple
+from SellkeSimulation.simulation_code import complex_epidemic_simulation
 
 G_test = nx.complete_graph(200)
 
 def fixed_length(para,n): return np.array([5]*n)
 
-test_sim_2 = sir_network_sellke_simple(G = G_test,
+test_sim_2 = complex_epidemic_simulation(G = G_test,
     beta = 0.008,
     I_parameters = 1.5,
-    infected_started = [0,1,2,3,4],
+    initial_infected = [0,1,2,3,4],
     infection_period_distribution = fixed_length)
 
 test_copy = test_sim_2
@@ -25,32 +25,32 @@ test_copy.resistance.extend([100]*190)
 def test_initialise_infection():
     #Test that the infection is initialised correctly in the network
     npr.seed(1)
-    simulation_class = sir_network_sellke_simple(G = G_test,
+    epidemic_simulation = complex_epidemic_simulation(G = G_test,
         beta = 0.008,
         I_parameters = 1.5,
-        infected_started = 5)
+        initial_infected = 5)
     npr.seed(1)
     test_list = np.random.choice(range(200), size = 5, replace = False)
-    assert all(simulation_class.infected_nodes == test_list)
+    assert all(epidemic_simulation.infected_nodes == test_list)
 
 
 def test_initialise_infection_list():
     test_list = [1,2,3,4,5]
-    simulation_class = sir_network_sellke_simple(G = G_test,
+    epidemic_simulation = complex_epidemic_simulation(G = G_test,
         beta = 0.008,
         I_parameters = 1.5,
-        infected_started = test_list)
-    simulation_class.initialise_infection()
-    assert simulation_class.infected_nodes == test_list
+        initial_infected = test_list)
+    epidemic_simulation.initialise_infection()
+    assert epidemic_simulation.infected_nodes == test_list
 
 def test_infectious_period_generation():
     """We test the generate_infection_periods method to check it is behaving as expected.
     """
-    simulation_class = sir_network_sellke_simple(G = G_test,
+    epidemic_simulation = complex_epidemic_simulation(G = G_test,
         beta = 0.008,
         I_parameters = 1.5,
-        infected_started = 5)
-    simulation_class.generate_infection_periods()
+        initial_infected = 5)
+    epidemic_simulation.generate_infection_periods()
     assert 4==4
 
 
@@ -58,10 +58,10 @@ def test_cumulative_hazards():
     """
     We test the the cumulative hazard for each node is computed correctly.
     """
-    sim = sir_network_sellke_simple(G = G_test,
+    sim = complex_epidemic_simulation(G = G_test,
         beta = 0.008,
         I_parameters = 1.5,
-        infected_started = 5,
+        initial_infected = 5,
         infection_period_distribution = fixed_length)
     sim.calculate_total_emitted_hazard()
     expected_answer = [5*0.008] * 200
@@ -74,10 +74,10 @@ def test_cumulative_exposure():
     Tests that exposure level is being computed correctly.
     first test: for the complete graph, with 5 exposed, every node should receive 25 exposure
     """
-    sim = sir_network_sellke_simple(G = G_test,
+    sim = complex_epidemic_simulation(G = G_test,
         beta = 0.008,
         I_parameters = 1.5,
-        infected_started = [0,1,2,3,4],
+        initial_infected = [0,1,2,3,4],
         infection_period_distribution = fixed_length)
     sim.compute_exposure_levels()
 
@@ -109,7 +109,7 @@ def test_iterate_epidemic_successfully():
 
 def test_iterate_epidemic_real_epidemic():
     npr.seed(1)
-    my_epidemic = sir_network_sellke_simple(G_test,beta = 0.008, I_parameters = 1.5, infected_started = [1])
+    my_epidemic = complex_epidemic_simulation(G_test,beta = 0.008, I_parameters = 1.5, initial_infected = [1])
     my_epidemic.iterate_epidemic()
     assert my_epidemic.iterations > 1
 
@@ -117,7 +117,7 @@ def test_node_list_complex():
     """For some graphs, i.e; a lattice where nodes are named using lists. We cannot refer to them numerically, so we have more advanced logic to handle this.
     """
     G_test_lattice = nx.grid_2d_graph(1,1)
-    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 0.008, I_parameters = 1.5, infected_started = 1)
+    my_epidemic = complex_epidemic_simulation(G_test_lattice,beta = 0.008, I_parameters = 1.5, initial_infected = 1)
     my_epidemic.iterate_epidemic()
     assert my_epidemic.final_size == 1
     assert my_epidemic.iterations == 1
@@ -126,7 +126,7 @@ def test_complex_node_list_iteration():
     """We check that the iteration can be successfully performed over a complex node list
     """
     G_test_lattice = nx.grid_2d_graph(2,2)
-    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 100, I_parameters = 1, infected_started = 1)
+    my_epidemic = complex_epidemic_simulation(G_test_lattice,beta = 100, I_parameters = 1, initial_infected = 1)
     my_epidemic.iterate_epidemic()
     assert my_epidemic.final_size == 4
     assert my_epidemic.iterations == 3
@@ -135,7 +135,7 @@ def test_complex_node_list_iteration_larger_network():
     """We check that the iteration can be successfully performed over a complex node list
     """
     G_test_lattice = nx.grid_2d_graph(10,10)
-    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 100, I_parameters = 1, infected_started = 1)
+    my_epidemic = complex_epidemic_simulation(G_test_lattice,beta = 100, I_parameters = 1, initial_infected = 1)
     my_epidemic.iterate_epidemic()
     assert my_epidemic.final_size > 4
     assert my_epidemic.iterations > 3
@@ -144,7 +144,7 @@ def test_complex_node_list_iteration_larger_network():
 #    """We check that the iteration can be successfully performed over a complex node list
 #    """
 #    G_test_lattice = nx.grid_2d_graph(10,10)
-#    my_epidemic = sir_network_sellke_simple(G_test_lattice,beta = 100, I_parameters = 1, infected_started = (1,1))
+#    my_epidemic = complex_epidemic_simulation(G_test_lattice,beta = 100, I_parameters = 1, initial_infected = (1,1))
 #    my_epidemic.iterate_epidemic()
 #    assert my_epidemic.final_size > 4
 #    assert my_epidemic.iterations > 3
