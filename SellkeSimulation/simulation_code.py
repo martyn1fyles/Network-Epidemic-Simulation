@@ -5,43 +5,7 @@ import networkx as nx
 from SellkeSimulation.EpidemicSimulation import epidemic_data
 
 
-def generate_infection_periods(self,inf_period_dist = None, I_parameters = None, N = None):
-    '''
-    This method contains the logic required to handle change of infectious period distributions.
-    Defaults to choosing the exponential distribution if no other distribution is specified.
-    Different distributions have a different number of parameters passed to them 
-     
-    To Do:
-    Add some proper break variables to this whole business if we reach an error
-    Make the error messages better
 
-    The tests for this function are done by calling it via SIR_simple_sellke, cba writing a new set of tests
-    '''
-    self.inf_period_dist = inf_period_dist
-    self.I_parameters = I_parameters
-
-    if self.inf_period_dist is None:
-        if type(self.I_parameters) == int or type(self.I_parameters) == float:
-            self.inf_periods = np.random.exponential(self.I_parameters,self.N)
-        else:
-            print("Put something here to stop everything else going ahead because te parameters are not correct.")
-    else:
-        if type(self.I_parameters) == int or type(self.I_parameters) == float:
-            self.inf_periods = self.inf_period_dist(self.I_parameters, self.N)
-        elif len(self.I_parameters) == 2:
-            self.inf_periods = self.inf_period_dist(self.I_parameters[0]
-                                                ,self.I_parameters[1]
-                                                ,self.N)
-        elif len(self.I_parameters) == 3:
-            self.inf_periods = self.inf_period_dist(self.I_parameters[0]
-                                                ,self.I_parameters[1]
-                                                ,self.I_parameters[2]
-                                                ,self.N)
-        else:
-            print("There is something incorrect with the parameters.")
-    if any(self.inf_periods < 0):
-        raise ValueError("Negative values for length of infectious period detected. Ensure use of a positive distribution.")
-    return(self.inf_periods)
 
 class hazard_class:
     '''
@@ -50,7 +14,7 @@ class hazard_class:
     Particular duties include:
     hazard rate evaluation
     hazard rate integration
-    producing the cumulative hazrd vector
+    producing the cumulative hazard vector
     '''
     
     def __init__(self, hazard_function):
@@ -128,17 +92,14 @@ class SIR_Selke:
         self.I_parameters = I_parameters
         self.inf_period_dist = infection_period_distribution
         self.hazard_rate = hazard_rate
+        self.generate_infection_periods()
         if self.inf_period_dist == None:
             print("Taking the exponential distribution of the length of the infectious periods.")
-
-    def generate_infection_periods(self):
-        #There's a function that generates the infection periods as it is shared between several class objects
-        return(generate_infection_periods(self,self.inf_period_dist, self.I_parameters))
     
     def compute_final_size(self):
         '''Generates 1 observation of the final size of an epidemic from the parameters defined earlier'''
         #Infectious Period variables, function as defined in the __init__ section
-        T = self.generate_infection_periods()
+        T = self.inf_periods
         assert all(T) > 0
 
         #The resistance to infection variables, always an exponential 1 rv
@@ -174,6 +135,42 @@ class SIR_Selke:
         
         return(counter)
 
+    def generate_infection_periods(self):
+        '''
+        This method contains the logic required to handle change of infectious period distributions.
+        Defaults to choosing the exponential distribution if no other distribution is specified.
+        Different distributions have a different number of parameters passed to them 
+     
+        To Do:
+        Add some proper break variables to this whole business if we reach an error
+        Make the error messages better
+
+        The tests for this function are done by calling it via SIR_simple_sellke, cba writing a new set of tests
+        '''
+
+        if self.inf_period_dist is None:
+            if type(self.I_parameters) == int or type(self.I_parameters) == float:
+                self.inf_periods = np.random.exponential(self.I_parameters,self.N)
+            else:
+                print("Put something here to stop everything else going ahead because te parameters are not correct.")
+        else:
+            if type(self.I_parameters) == int or type(self.I_parameters) == float:
+                self.inf_periods = self.inf_period_dist(self.I_parameters, self.N)
+            elif len(self.I_parameters) == 2:
+                self.inf_periods = self.inf_period_dist(self.I_parameters[0]
+                                                ,self.I_parameters[1]
+                                                ,self.N)
+            elif len(self.I_parameters) == 3:
+                self.inf_periods = self.inf_period_dist(self.I_parameters[0]
+                                                ,self.I_parameters[1]
+                                                ,self.I_parameters[2]
+                                                ,self.N)
+            else:
+                print("There is something incorrect with the parameters.")
+            if any(self.inf_periods < 0):
+                raise ValueError("Negative values for length of infectious period detected. Ensure use of a positive distribution.")
+        self.inf_periods
+
     
     def sim_final_size(self, n_sim):
         '''Generates multiple observations of the final size of the epidemic.'''
@@ -194,6 +191,8 @@ class SIR_Selke:
         self.plot = plt.hist(self.observations, bins = range(self.N))
         plt.hist(self.observations, bins = range(self.N), density = True)
         plt.title(f'Final epidemic size of {self.n_sim} observations')
+
+
 
 class complex_epidemic_simulation(epidemic_data):
     '''
@@ -219,65 +218,77 @@ class complex_epidemic_simulation(epidemic_data):
         self.beta = beta
         self.inf_starting = initial_infected
         self.I_parameters = I_parameters
-        self.inf_period_dist = infection_period_distribution
         self.hazard_rate = hazard_rate
         self.N = nx.number_of_nodes(self.G)
-        self.data_structure = epidemic_data(G, initial_infected)
-        self.generate_infection_periods()
+        self.data_structure = epidemic_data(G, initial_infected, infection_period_distribution, I_parameters)
+        self.epi_data = self.data_structure.epi_data
+        self.new_infections = self.infected_nodes[:]
         self.calculate_total_emitted_hazard()
-        self.resistance = np.random.exponential(1, size = self.N)
+        self.time = 0
     
+    @property
+    def infected_nodes(self):
+        """Returns the calls the data structure to return the set of infected
+        """
+        return [nodes for nodes in self.data_structure.epi_data if self.data_structure.epi_data[nodes]["Infection Stage"] == "Infected"]
 
-    def generate_infection_periods(self):
+    @property
+    def susceptible_nodes(self):
+        """Returns the calls the data structure to return the set of susceptibles
+        """
+        return [nodes for nodes in self.epi_data if self.epi_data[nodes]["Infection Stage"] == "Susceptible"]
+
+    @property
+    def infectious_periods(self):
         #There's a function that generates the infection periods as it is shared between several class objects
-        self.infectious_periods = generate_infection_periods(self, self.inf_period_dist, self.I_parameters)
+        return [self.epi_data[node]["Infection Period"] for node in self.epi_data]
+
+    @property
+    def exposure_level(self):
+        """Call to the data structure to return the current exposure level for every node in the network.
+        """
+        return [self.epi_data[node]["Exposure Level"] for node in self.epi_data]
     
     def calculate_total_emitted_hazard(self):
         """For every node in the network, we calculate the total hazard emitted if they were infected.
         """
-        #self.generate_infection_periods()
+
         haz = hazard_class(self.hazard_rate)
 
-        self.cumulative_node_hazard = [self.beta * haz.integrate_hazard(length) for length in self.infectious_periods]
+        self.lifetime_emitted_hazard = [self.beta * haz.integrate_hazard(length) for length in self.infectious_periods]
 
-    def compute_exposure_levels(self):
-        """Calculates how much hazard a node is being exposed to.
-        We iterate over the infected set.
+    def updates_exposure_levels(self):
+        """Updates the exposure levels of nodes that are connected to newly infected nodes.
         """
-        
-        self.exposure_level = [0]*self.N
 
-        for node in self.infected_nodes:
+        for node in self.new_infections:
             connected_nodes = self.G.neighbors(node)
             node_index = self.node_keys.index(node)
-            emitted_hazard = self.cumulative_node_hazard[node_index]
+            emitted_hazard = self.lifetime_emitted_hazard[node_index]
 
-            for exposed_node in connected_nodes:
-                exposed_node_index = self.node_keys.index(exposed_node)
-                self.exposure_level[exposed_node_index] = self.exposure_level[exposed_node_index] + emitted_hazard
+            for connected_node in connected_nodes:
+                self.data_structure.update_exposure_level(connected_node, emitted_hazard)
         
-    def update_infected_status(self):
-        """
-        The infected list gets updated based upon their exposure level.
+    def determine_new_infections(self):
+        """The infected list gets updated based upon their exposure level.
         """
         #Loops over all nodes which isn't terribly efficient.
-        self.compute_exposure_levels()
-        for node in self.node_keys:
-
-            node_index = self.node_keys.index(node)
-            if node not in self.infected_nodes and self.exposure_level[node_index] > self.resistance[node_index]:
-                self.infected_nodes.append(node)
+        self.updates_exposure_levels()
+        self.new_infections = [susceptible for susceptible in self.susceptible_nodes if (self.epi_data[susceptible]["Resistance"] < self.epi_data[susceptible]["Exposure Level"]) ]
+        self.update_infection_stage(self.new_infections, "Infected", self.time)
     
+
     def iterate_epidemic(self):
+        """Control structure for looping the epidemic until it completes. Only useful for estimating the final size of an SIR epidemic.
         """
-        Control structure for looping the epidemic until it completes. Only useful for estimating the final size of an SIR epidemic.
-        """
+        #The set of infected at the previous step of the iteration
         previously_infected = self.infected_nodes[:]
+        #The nodes whose neighbours exposure levels will be updated.
+        self.new_infections = self.infected_nodes[:]
         epidemic_ended = False
-        self.iterations = 0
         while epidemic_ended == False:
-            self.iterations += 1
-            self.update_infected_status()
+            self.time += 1
+            self.determine_new_infections()
             if previously_infected == self.infected_nodes:
                 epidemic_ended = True
             previously_infected = self.infected_nodes[:]

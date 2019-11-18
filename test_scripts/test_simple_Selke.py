@@ -5,21 +5,12 @@ import numpy as np
 from pytest import raises
 print("Hello World")
 
-def test_the_testers():
-    """
-    Does the python package even work? Can we find a single goddamn test? Am I going crazy?
-    """
-    test_var = 2 + 4
-    assert test_var == 6
-
-
-
 def test_data_gen_simple():
     #We do not specify the distribution, we check that the function draws the correct vector from the exponential distribution
     #the parameter for the infectious periods is set to 1.5
     npr.seed(1)
     simulation = SIR_Selke(200, 0.008, 1.5, 5)
-    test_var = simulation.generate_infection_periods()
+    test_var = simulation.inf_periods
 
     npr.seed(1)
     test_var2 = npr.exponential(1.5, 200)
@@ -29,7 +20,7 @@ def test_data_gen_simple():
 def test_data_gen_non_markovian_1_par():
     npr.seed(1)
     simulation = SIR_Selke(200, 0.008, 0.9, 5, infection_period_distribution = npr.geometric)
-    test_var = simulation.generate_infection_periods()
+    test_var = simulation.inf_periods
 
     npr.seed(1)
     test_var2 = npr.geometric(0.9, 200)
@@ -38,16 +29,16 @@ def test_data_gen_non_markovian_1_par():
 def test_data_gen_non_markovian_int_parameter():
     npr.seed(1)
     simulation = SIR_Selke(200, 0.008, 1, 5, infection_period_distribution = npr.exponential)
-    test_var = simulation.generate_infection_periods()
+    test_var = simulation.inf_periods
 
     npr.seed(1)
     test_var2 = npr.exponential(1, 200)
     assert all(test_var2 == test_var)
 
 def test_error_unless_pos_distribution():
-    simulation = SIR_Selke(200, 0.008, [1,1], 5, infection_period_distribution = npr.normal)
     with raises(ValueError):
-        simulation.generate_infection_periods()
+        simulation = SIR_Selke(200, 0.008, [1,1], 5, infection_period_distribution = npr.normal)
+    
 
 def test_final_size_calculation():
     #Tests the calculation of the final size epidemic against the manually calculated value
@@ -55,7 +46,7 @@ def test_final_size_calculation():
 
     #Generated the infection periods
     npr.seed(1)
-    T = simulation.generate_infection_periods()
+    T = simulation.inf_periods
     res_to_inf = npr.exponential(1,200)
     #There is a 4 here because python starts counting at zero, so this sets the first 5 to 0.
     res_to_inf[:4] = 0
