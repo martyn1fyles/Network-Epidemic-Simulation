@@ -21,7 +21,7 @@ class hazard_class:
     def hazard(self, t, t_end):
         '''
         A housekeeping variant of the hazard function.
-        Retuns 0 if t is less than 0, truncates to 0 after t_end
+        Returns 0 if t is less than 0, truncates to 0 after t_end
         If no hazard rate was specified, returns 1 so the system defaults to exponential waiting times.
         '''
         self.t_end = t_end
@@ -41,7 +41,7 @@ class hazard_class:
         !Not in use!
 
         Given a predefined hazard function, an input time, and the lengths of the infectious periods
-        The function caculates the rate at which the hazard is emitted at time t, assuming they were all intially infected
+        The function calculates the rate at which the hazard is emitted at time t, assuming they were all intially infected
 
         Designed as an input function for the BVP Solver, which doesn't currently work
         '''

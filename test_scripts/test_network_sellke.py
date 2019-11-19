@@ -28,7 +28,7 @@ test_copy_2 = test_sim_2
 This test is no longer viable as we now initialise the infection differently now.
 
 def test_initialise_infection():
-    #Test that the infection is initialised correctly in the network
+    #Test that the infection is initialized correctly in the network
     
     epidemic_simulation = complex_epidemic_simulation(G = G_test,
         beta = 0.008,
@@ -113,7 +113,7 @@ def test_cumulative_exposure():
     for _ in range(100):
         sim.updates_exposure_levels()
 
-    # The fixed_lengh dist returns an infectious period of length 5
+    # The fixed_length dist returns an infectious period of length 5
     expected_answer = [4*0.008*5]*5
     # There for the uninfected,
     expected_answer.extend([5*0.008*5]*195)
