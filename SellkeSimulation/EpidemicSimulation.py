@@ -65,7 +65,7 @@ class epidemic_data(infection_period_handler):
         #Create a dictionary where the keys are the node name.
         epi_data = dict(self.G.nodes())
 
-        #We assign each node a basic dictionary
+        #We assign each node a basic dictionary of things that we want to track
         node_info = {
             #The latest set of information for a node is stored here
             "Infection Stage": None,
