@@ -90,7 +90,7 @@ class complex_epidemic_simulation(epidemic_data):
     G a network x graph object
     '''
 
-    def __init__(self, G, beta, I_parameters, initial_infected, time_increment, max_iterations, hazard_rate=None, infection_period_distribution=None):
+    def __init__(self, G, beta, I_parameters, initial_infected, time_increment, max_iterations, hazard_rate=None, infection_period_distribution=None, SIS = None):
         self.G = G
         self.node_keys = list(G.nodes())
         self.beta = beta
@@ -100,7 +100,10 @@ class complex_epidemic_simulation(epidemic_data):
         self.hazard_rate = hazard_rate
         self.N = nx.number_of_nodes(self.G)
         self.data_structure = epidemic_data(
-            G, initial_infected, infection_period_distribution, I_parameters)
+            G, initial_infected, 100, infection_period_distribution, I_parameters)
+        self.SIS = SIS
+        if self.SIS == None:
+            self.SIS = False
         self.epi_data = self.data_structure.epi_data
         self.new_infections = self.infected_nodes[:]
         self.calculate_total_emitted_hazard()
@@ -161,10 +164,12 @@ class complex_epidemic_simulation(epidemic_data):
             emitted_hazard = self.beta * self.hazard.increment_hazard(
                 time_since_infected, time_since_infected + self.time_increment, end_of_infection)
 
-            connected_nodes = self.G.neighbors(node)
-            for connected_node in connected_nodes:
+            connected_susceptibles = list(
+                set(self.G.neighbors(node)) & set(self.susceptible_nodes))
+
+            for exposed_node in connected_susceptibles:
                 self.data_structure.update_exposure_level(
-                    connected_node, emitted_hazard)
+                    exposed_node, emitted_hazard)
 
     def determine_new_infections(self):
         """The infected list gets updated based upon their exposure level.
@@ -176,9 +181,16 @@ class complex_epidemic_simulation(epidemic_data):
     def determine_recoveries(self):
         """Nodes if the amount of time since the infected started is greater than the length of the infection period, the nodes status changes to Recovered.
         """
-        recoveries = [infected for infected in self.infected_nodes if self.epi_data[infected]
-                      ["Infection Stage Started"] + self.epi_data[infected]["Infection Period"] < self.time]
-        self.update_infection_stage(recoveries, "Recovered", self.time)
+        recoveries = [infected for infected in self.infected_nodes
+                    if self.epi_data[infected]["Infection Stage Started"] + self.epi_data[infected]["Infection Period"] < self.time]
+
+        if self.SIS == False: 
+            self.update_infection_stage(recoveries, "Recovered", self.time)
+        elif self.SIS == True:
+            self.update_infection_stage(recoveries, "Susceptible", self.time)
+        else:
+            raise ValueError("SIS parameter not set to true or false.")
+
 
     def iterate_epidemic(self):
         """Control structure for looping the epidemic until it completes. Only useful for estimating the final size of an SIR epidemic.
@@ -189,20 +201,53 @@ class complex_epidemic_simulation(epidemic_data):
         iteration = 0
         epidemic_ended = False
         max_iterations_reached = False
+
+        #We will be recording data into these lists.
+        time = [self.time]
+        susceptible_count = [len(self.susceptible_nodes)]
+        infected_count = [len(self.infected_nodes)]
+        recovered_count = [len(self.recovered_nodes)]
+
+        infected_set = [self.infected_nodes]
+        suscuptible_set = [self.susceptible_nodes]
+        recovered_set = [self.recovered_nodes]
+
         while (epidemic_ended == False) and (max_iterations_reached == False):
+
             self.determine_recoveries()
             self.updates_exposure_levels()
             self.determine_new_infections()
-            if self.infected_nodes == []:
-                epidemic_ended = True
 
             iteration += 1
             self.time += self.time_increment
+
+            time.append(self.time)
+            infected_count.append(len(self.infected_nodes))
+            susceptible_count.append(len(self.susceptible_nodes))
+            recovered_count.append(len(self.recovered_nodes))
+
+            suscuptible_set.append(self.susceptible_nodes)
+            infected_set.append(self.infected_nodes)
+            recovered_set.append(self.recovered_nodes)
+
+            if self.infected_nodes == []:
+                epidemic_ended = True
 
             if iteration == self.max_iterations:
                 max_iterations_reached = True
 
         self.final_size = len(self.recovered_nodes)
+        self.iterations = iteration
+        self.data_time = time
+
+        self.data_susceptible_counts = susceptible_count
+        self.data_infected_counts = infected_count
+        self.data_recovered_counts = recovered_count
+
+        self.data_susceptible_nodes = suscuptible_set
+        self.data_infected_nodes = infected_set
+        self.data_recovered_nodes = recovered_set
+
         if epidemic_ended == True:
             self.stop_reason = f"The epidemic died out at time = {self.time} ({iteration} iterations)"
         else:
