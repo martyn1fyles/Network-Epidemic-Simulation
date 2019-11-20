@@ -44,20 +44,20 @@ class infection_period_handler:
 
 
 class epidemic_data(infection_period_handler):
-    def __init__(self, G, initial_infected, infection_period_distribution = None, infection_period_parameters = None, debug = False):
+    def __init__(self, G, initial_infected, pre_gen_data, infection_period_distribution = None, infection_period_parameters = None):
         self.G = G
-        #create a list of the keys that are used in the data structure.
         self.node_keys = list(G.nodes())
         self.N = len(self.node_keys)
+
+        self.pre_gen_data = pre_gen_data
         self.initial_infected = initial_infected
         self.infection_period_distribution = infection_period_distribution
         self.infection_period_parameters = infection_period_parameters
-        self.infection_period_handler = infection_period_handler(self.N, self.infection_period_distribution, self.infection_period_parameters)
+        self.infection_period_handler = infection_period_handler(self.pre_gen_data, self.infection_period_distribution, self.infection_period_parameters)
+        
         self.initialise_data_structure()
-        self.initialise_resistances()
+        self.pre_generate_data()
         self.initialise_infection()
-        self.initialise_infection_periods()
-        if debug == True: print("epidemic_data.__init__ has been called")
 
 
     def initialise_data_structure(self):
@@ -73,12 +73,18 @@ class epidemic_data(infection_period_handler):
             "Resistance": 0,
             "Infection Period": 0,
             "Exposure Level": 0,
+            "Times Infected": 0,
+            "Times Susceptible": 0,
             "History": {
                 #Records the times at which events occur
                 "Node Created": 0,
                 "Infection Stage Log": [],
                 "Infection Stage Times": []
             },
+            "Pre-generated Data": {
+                "Resistance": [],
+                "Infection Period": []
+            }
         }
 
         for node in epi_data:
@@ -101,21 +107,6 @@ class epidemic_data(infection_period_handler):
         self.update_infection_stage(self.initial_infected, "Infected", 0)
         initial_susceptibles = [node for node in self.epi_data if self.epi_data[node]["Infection Stage"] != "Infected"]
         self.update_infection_stage(initial_susceptibles, "Susceptible", 0)
-    
-    def initialise_infection_periods(self):
-        infection_periods = self.infection_period_handler.generate()
-        i=0
-        for node in self.node_keys:
-            self.epi_data[node].update({"Infection Period": infection_periods[i]})
-            i += 1
-        
-    def initialise_resistances(self):
-        resistances = np.random.exponential(size = self.N)
-        i=0
-        for node in self.node_keys:
-            self.epi_data[node].update({"Resistance": resistances[i]})
-            i += 1
-
         
     def update_infection_stage(self,node_list, new_stage, timepoint):
         """Changes the stage of a node and records the time at which this occurs.
@@ -127,16 +118,40 @@ class epidemic_data(infection_period_handler):
         """
         
         for node in node_list:
-
+            
             #update the infection stage
             self.epi_data[node].update({"Infection Stage": str(new_stage)})
-            #append the new stage to the log
+
+            #If the new stage is susceptible, we give them a new resistance value and set their exposure to 0.
+            if new_stage == "Susceptible":
+                #How many times have they been in the susceptible state
+                times_susceptible = self.epi_data[node]["Times Susceptible"]
+                #Get the resistance for that susceptible state
+                new_resistance = self.epi_data[node]["Pre-generated Data"]["Resistance"][times_susceptible]
+                #Update their current resistance to the new resistance
+                self.epi_data[node].update({"Resistance": new_resistance})
+                #Add one to the number of times they've been in the susceptible state
+                self.epi_data[node].update({"Times Susceptible": times_susceptible + 1})
+                #Set their exposure level to 0
+                self.epi_data[node].update({"Exposure Level": 0})
+            
+            #If the new stage is infected, we give them a new infection period value and set their exposure to 0.
+            if new_stage == "Infected":
+                #How many times have they been in the susceptible state
+                times_infected = self.epi_data[node]["Times Infected"]
+                #Get the resistance for that susceptible state
+                new_infection_period = self.epi_data[node]["Pre-generated Data"]["Infection Period"][times_infected]
+                #Update their current resistance to the new resistance
+                self.epi_data[node].update({"Infection Period": new_infection_period})
+                #Add one to the number of times they've been in the susceptible state
+                self.epi_data[node].update({"Times Infected": times_infected + 1})
+
+            #Update the infection stage history
             new_log = self.epi_data[node]["History"]["Infection Stage Log"]
             new_log.append(new_stage)
-            #update the log
             self.epi_data[node]["History"].update({"Infection Stage Log": new_log})
 
-
+            #Update the the timepoints.
             self.epi_data[node].update({"Infection Stage Started": timepoint})
             new_times = self.epi_data[node]["History"]["Infection Stage Times"]
             new_times.append(timepoint)
@@ -153,3 +168,15 @@ class epidemic_data(infection_period_handler):
         new_exposure = self.epi_data[node]["Exposure Level"] + exposure_increment
         self.epi_data[node].update({"Exposure Level": new_exposure})
         
+    def pre_generate_data(self):
+        """This method pre-generates the infection periods. This is important, because we want to be able to re-run epidemics with an intervention to see how effective it is.
+        
+        Arguments:
+            count {int} -- How many infection periods to generate. If the number of infections for a node exceeds the pre generated data, an error will be thrown.
+        """
+        for node in self.node_keys:
+            resistances = list(np.random.exponential(1,self.pre_gen_data))
+            self.epi_data[node]["Pre-generated Data"].update({"Resistance": resistances})
+
+            inf_periods = list(self.infection_period_handler.generate())
+            self.epi_data[node]["Pre-generated Data"].update({"Infection Period": inf_periods})
