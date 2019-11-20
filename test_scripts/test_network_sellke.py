@@ -153,9 +153,8 @@ def test_iterate_epidemic_successfully():
      for node in test_copy.node_keys[10:200]]
     test_copy.determine_new_infections()
     test_copy.iterate_epidemic()
-    # I think this test is fucked due to the use of derived variables in the iteration end logic.
     assert test_copy.final_size == 10
-    assert test_copy.time == 1
+    assert test_copy.iterations == 61
 
 
 def test_iterate_epidemic_real_epidemic():
