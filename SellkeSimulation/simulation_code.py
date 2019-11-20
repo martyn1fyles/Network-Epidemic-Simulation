@@ -38,7 +38,7 @@ class hazard_class:
 
     def total_hazard_function(self, t, T_endpoints):
         '''
-        !Not in use!
+        Not in use, although for visualisation purposes I intend to keep it in here, as I would like to plot the hazard rate over time.
 
         Given a predefined hazard function, an input time, and the lengths of the infectious periods
         The function calculates the rate at which the hazard is emitted at time t, assuming they were all intially infected
@@ -106,7 +106,6 @@ class complex_epidemic_simulation(epidemic_data):
             self.SIS = False
         self.epi_data = self.data_structure.epi_data
         self.new_infections = self.infected_nodes[:]
-        self.calculate_total_emitted_hazard()
         self.time = 0
         self.hazard = hazard_class(self.hazard_rate)
         self.max_iterations = max_iterations
@@ -139,17 +138,6 @@ class complex_epidemic_simulation(epidemic_data):
         """Call to the data structure to return the current exposure level for every node in the network.
         """
         return [self.epi_data[node]["Exposure Level"] for node in self.epi_data]
-
-    def calculate_total_emitted_hazard(self):
-        """For every node in the network, we calculate the total hazard emitted if they were infected.
-
-        DEPRECATED
-        """
-
-        haz = hazard_class(self.hazard_rate)
-
-        self.lifetime_emitted_hazard = [
-            self.beta * haz.integrate_hazard(length) for length in self.infectious_periods]
 
     def updates_exposure_levels(self):
         """Updates the exposure levels of nodes that are connected to newly infected nodes. This should only affect susceptible nodes.
