@@ -72,6 +72,7 @@ class hazard_class:
         return hazard_emitted[0]
 
 
+
 class complex_epidemic_simulation(epidemic_data):
     '''
     This is the class we use to simulate Sellke on a network
@@ -90,10 +91,20 @@ class complex_epidemic_simulation(epidemic_data):
     G a network x graph object
     '''
 
-    def __init__(self, G, beta, I_parameters, initial_infected, time_increment, max_iterations, hazard_rate=None, infection_period_distribution=None, SIS = None):
+    def __init__(self, G, beta, I_parameters, initial_infected, time_increment, max_iterations, hazard_rate=None,
+                 infection_period_distribution=None, SIS = None, increment_network = None,
+                 custom_behaviour = None, dynamic_network = None):
+        #variables for controlling the iteration
+        self.iteration = 0
+        self.epidemic_ended = False
+        self.max_iterations_reached = False
+
         self.G = G
         self.node_keys = list(G.nodes())
         self.beta = beta
+        self.custom_behaviour = custom_behaviour
+        self.dynamic_network = dynamic_network
+        self.increment_network = increment_network
         self.time_increment = time_increment
         self.inf_starting = initial_infected
         self.I_parameters = I_parameters
@@ -109,6 +120,16 @@ class complex_epidemic_simulation(epidemic_data):
         self.time = 0
         self.hazard = hazard_class(self.hazard_rate)
         self.max_iterations = max_iterations
+
+        #Data for the results
+        self.data_time = [0]
+        self.data_susceptible_counts = [len(self.susceptible_nodes)]
+        self.data_infected_counts = [len(self.infected_nodes)]
+        self.data_recovered_counts = [len(self.recovered_nodes)]
+
+        self.data_susceptible_nodes = [self.susceptible_nodes]
+        self.data_infected_nodes = [self.infected_nodes]
+        self.data_recovered_nodes = [self.recovered_nodes]
 
     @property
     def infected_nodes(self):
@@ -179,64 +200,53 @@ class complex_epidemic_simulation(epidemic_data):
         else:
             raise ValueError("SIS parameter not set to true or false.")
 
+    def perform_iteration(self):
+        
+        #Computation Steps
+        if self.increment_network != None:
+            self.increment_network(self.time_increment)
+        self.determine_recoveries()
+        self.updates_exposure_levels()
+        self.determine_new_infections()
+
+        self.iteration += 1
+        self.time += self.time_increment
+
+        if self.custom_behaviour != None:
+            self.custom_behaviour(self)
+
+
+        #Recording data from here onwards
+        self.data_time.append(self.time)
+
+        self.data_susceptible_counts.append(len(self.susceptible_nodes))
+        self.data_infected_counts.append(len(self.infected_nodes))
+        self.data_recovered_counts.append(len(self.recovered_nodes))
+
+        self.data_susceptible_nodes.append(self.susceptible_nodes)
+        self.data_infected_nodes.append(self.infected_nodes)
+        self.data_recovered_nodes.append(self.recovered_nodes)
+
+        if self.infected_nodes == []:
+            self.epidemic_ended = True
+
+        if self.iteration == self.max_iterations:
+            self.max_iterations_reached = True
+
 
     def iterate_epidemic(self):
         """Control structure for looping the epidemic until it completes. Only useful for estimating the final size of an SIR epidemic.
         """
         # The set of infected at the previous step of the iteration
         # The nodes whose neighbours exposure levels will be updated.
-
-        iteration = 0
-        epidemic_ended = False
-        max_iterations_reached = False
-
         #We will be recording data into these lists.
-        time = [self.time]
-        susceptible_count = [len(self.susceptible_nodes)]
-        infected_count = [len(self.infected_nodes)]
-        recovered_count = [len(self.recovered_nodes)]
 
-        infected_set = [self.infected_nodes]
-        suscuptible_set = [self.susceptible_nodes]
-        recovered_set = [self.recovered_nodes]
-
-        while (epidemic_ended == False) and (max_iterations_reached == False):
-
-            self.determine_recoveries()
-            self.updates_exposure_levels()
-            self.determine_new_infections()
-
-            iteration += 1
-            self.time += self.time_increment
-
-            time.append(self.time)
-            infected_count.append(len(self.infected_nodes))
-            susceptible_count.append(len(self.susceptible_nodes))
-            recovered_count.append(len(self.recovered_nodes))
-
-            suscuptible_set.append(self.susceptible_nodes)
-            infected_set.append(self.infected_nodes)
-            recovered_set.append(self.recovered_nodes)
-
-            if self.infected_nodes == []:
-                epidemic_ended = True
-
-            if iteration == self.max_iterations:
-                max_iterations_reached = True
+        while (self.epidemic_ended == False) and (self.max_iterations_reached == False):
+            self.perform_iteration()
 
         self.final_size = len(self.recovered_nodes)
-        self.iterations = iteration
-        self.data_time = time
 
-        self.data_susceptible_counts = susceptible_count
-        self.data_infected_counts = infected_count
-        self.data_recovered_counts = recovered_count
-
-        self.data_susceptible_nodes = suscuptible_set
-        self.data_infected_nodes = infected_set
-        self.data_recovered_nodes = recovered_set
-
-        if epidemic_ended == True:
-            self.stop_reason = f"The epidemic died out at time = {self.time} ({iteration} iterations)"
+        if self.epidemic_ended == True:
+            self.stop_reason = f"The epidemic died out at time = {self.time} ({self.iteration} iterations)"
         else:
-            self.stop_reason = f"The simulation stopped because the max number of iteration was reached (max = {iteration} iterations)."
+            self.stop_reason = f"The simulation stopped because the max number of iteration was reached (max = {self.iteration} iterations)."

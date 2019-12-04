@@ -44,7 +44,7 @@ class infection_period_handler:
 
 
 class epidemic_data(infection_period_handler):
-    def __init__(self, G, initial_infected, pre_gen_data, infection_period_distribution = None, infection_period_parameters = None):
+    def __init__(self, G, initial_infected, pre_gen_data, infection_period_distribution = None, infection_period_parameters = None, treatment_class = False, treatment_dist = None):
         self.G = G
         self.node_keys = list(G.nodes())
         self.N = len(self.node_keys)
@@ -54,6 +54,8 @@ class epidemic_data(infection_period_handler):
         self.infection_period_distribution = infection_period_distribution
         self.infection_period_parameters = infection_period_parameters
         self.infection_period_handler = infection_period_handler(self.pre_gen_data, self.infection_period_distribution, self.infection_period_parameters)
+        self.treatment_class = treatment_class
+        self.treatment_dist = treatment_dist
         
         self.initialise_data_structure()
         self.pre_generate_data()
@@ -65,9 +67,9 @@ class epidemic_data(infection_period_handler):
         #Create a dictionary where the keys are the node name.
         epi_data = dict(self.G.nodes())
 
-        #We assign each node a basic dictionary of things that we want to track
+        #This is a basic set of information we need to know for each node.
         node_info = {
-            #The latest set of information for a node is stored here
+            #The current status of the node is stored at the top level.
             "Infection Stage": None,
             "Infection Stage Started": None,
             "Resistance": 0,
@@ -75,19 +77,26 @@ class epidemic_data(infection_period_handler):
             "Exposure Level": 0,
             "Times Infected": 0,
             "Times Susceptible": 0,
+            "Times Treated": 0, 
+
+            #The History sub dictionary is updated whenever the status of a node changes
             "History": {
                 #Records the times at which events occur
                 "Node Created": 0,
                 "Infection Stage Log": [],
                 "Infection Stage Times": []
             },
+
+            #Pre-generated Data is stored here, whenever the nodes status is updated, the new value is taken form the sequence defined in this sub-dictionary.
             "Pre-generated Data": {
                 "Resistance": [],
-                "Infection Period": []
+                "Infection Period": [],
+                "Treatment Periods": []
             }
         }
 
         for node in epi_data:
+            #I think the deepcopy can now just be changed to a copy.
             epi_data[node] = c.deepcopy(node_info)
         
         self.epi_data = epi_data
@@ -146,6 +155,16 @@ class epidemic_data(infection_period_handler):
                 #Add one to the number of times they've been in the susceptible state
                 self.epi_data[node].update({"Times Infected": times_infected + 1})
 
+            if new_stage == "In Treatment":
+                #How many times have they been in the treatment state
+                times_treated = self.epi_data[node]["Times Treated"]
+                #Get the treatment length
+                new_treatment_period = self.epi_data[node]["Pre-generated Data"]["Treatment Periods"][times_infected]
+                #Update their current resistance to the new resistance
+                self.epi_data[node].update({"Treatment Period": new_treatment_period})
+                #Add one to the number of times they've been in the susceptible state
+                self.epi_data[node].update({"Times Treated": times_treated + 1})
+
             #Update the infection stage history
             new_log = self.epi_data[node]["History"]["Infection Stage Log"]
             new_log.append(new_stage)
@@ -180,3 +199,7 @@ class epidemic_data(infection_period_handler):
 
             inf_periods = list(self.infection_period_handler.generate())
             self.epi_data[node]["Pre-generated Data"].update({"Infection Period": inf_periods})
+
+            if self.treatment_class == True:
+                treatment_lengths = list(self.treatment_dist(self.pre_gen_data))
+                self.epi_data[node]["Pre-generated Data"].update({"Treatment Periods": treatment_lengths})
