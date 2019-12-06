@@ -21,11 +21,13 @@ class dynamic_stochastic_block_model:
         [self.assign_membership_data(node) for node in self.G.nodes]
     
     def generate_migration_times(self, node, birth_time = 0):
-        """For a single node, this method returns the times at which the node moves between groups.
-
-        In the future, we will make it so that the length of time a node stays in a group is conditional upon the group.
-
-        For now, we will only allow exponentially distributed waiting times.
+        """ For a given node, generate the times at which they will migrate between the blocks.
+        
+        Arguments:
+            node {str, int, tuple} -- The dictionary key of the node whose times will be generated
+        
+        Keyword Arguments:
+            birth_time {int, float} -- The time at which the node was added to the network (default: {0})
         """
 
         current_block = self.G.nodes[node]["block"]
@@ -45,10 +47,19 @@ class dynamic_stochastic_block_model:
         return(memberships)
 
     def assign_membership_data(self, node, birth_time = 0):
-        #This method calls the method for data generation or migration times, and assigns the data to the node in the dictionary
-        #It also sets up other variabls necessary for fast updates
-        #The current membership index simply stores the index of the tuple which represents the current membership of the node
-        #This allows to quickly look at the next tuple, to work out migration times.
+        """Adds variables to a nodes dictionary that are required for quick calculation in the future.
+
+        These variables are:
+        Membership Data - The sequence of blocks that the node will belong to
+        Current Membership Index - The index of "Membership Data" which gives the current location in the sequence of block memberships
+        Next Migration Time - The time at which the node will change membership
+        
+        Arguments:
+            node {str, int, tuple} -- The dictionary key of the node whose times will be generated
+        
+        Keyword Arguments:
+            birth_time {int, float} -- The time at which the node was added to the network (default: {0})
+        """
 
         membership_data = self.generate_migration_times(node)
         self.G.nodes[node].update({"Membership Data": membership_data})
@@ -60,26 +71,22 @@ class dynamic_stochastic_block_model:
         if self.custom_attribute != None:
             self.G.nodes[node].update(self.custom_attribute)
 
-
-    def get_current_node_membership_index(self, node):
-        """Returns the index for the tuple in Membership data that represents the nodes current block membership
+    def get_node_current_block(self, node):
+        """Returns the current block membership of a node
         
         Arguments:
-            node {str, int, tuple} -- the NetworkX name for a node in the network
+            node {str, int, float} -- The dictionary key of the node whose current block membership will be returned
         
         Returns:
-            int -- The index for the membership tuple that represents the nodes current block membership
+            {str, int, float} -- The dictionary key representing of the block which the node currently belongs to
         """
-        return self.G.nodes[node]["Current Membership Index"]
-
-    def get_node_current_block(self, node):
         return self.G.nodes[node]["block"]
     
     def get_node_migration_times(self, node):
-        """Provides a list of times at which the node will move between blocks.
+        """Returns the time at which a node will migrate between block in the network
         
         Arguments:
-            node {str, int, tuple} -- the NetworkX name for a node in the network
+            node {str, int, tuple} -- The dictionary key of a node in the network
         
         Returns:
             list -- The list of times at which a node will move between blocks.
@@ -87,27 +94,53 @@ class dynamic_stochastic_block_model:
         return [data[1] for data in self.G.nodes[node]["Membership Data"]]
 
     def get_node_memberships(self, node):
-        """Provides the list of block that a node will belong to
+        """Returns the sequence of blocks that the node will belong to
         
         Arguments:
-            node {str, int, tuple} -- the NetworkX name for a node in the network
+            node {str, int, tuple} -- The dictionary key of a node in the network
         
         Returns:
-            list -- The list of times at which a node will move between blocks.
+            list -- The sequence of blocks that the node will belong to
         """
         return [data[0] for data in self.G.nodes[node]["Membership Data"]]
 
     def get_node_next_migration_time(self, node):
+        """Returns the next time that a node will migrate to another block
+        
+        Arguments:
+            node {str, int, tuple} -- The dictionary key of a node in the network
+        
+        Returns:
+            float -- The time next time at which a migration will occur for the chosen node
+        """
         return self.G.nodes[node]["Next Migration Time"]
 
     def get_next_migration_times(self):
+        """Returns a list of the times of next migration for every node in the network
+        
+        Returns:
+            list -- The list of times at which the next migration will occur for every node in the network
+        """
         return [self.G.nodes[node]["Next Migration Time"] for node in self.G.nodes()]
         
-    def determine_nodes_to_migrate(self, time):
+    def determine_nodes_to_migrate(self, time_limit):
+        """For a specified time_limit, this returns a list of nodes whose next migration event occurs before the specified time_limit
+        
+        Arguments:
+            time_limit {int, float} -- If a nodes next migration < time_limit, then the nodes dictionary key will be added to the returned list
+        
+        Returns:
+            list -- A list of nodes keys
+        """
         return [node for node in self.G.nodes if self.get_node_next_migration_time(node) < time]
         
     def perform_migration_event(self, node):
-        #Get the current index, add one to it, and update
+        """For a specified node, perform their next migration by updating the nodes dictionary entry, removing all edges and adding new edges based upon the specified probabilities
+        
+        Arguments:
+            node {str, int, tuple} -- The dictionary key of the node
+        """
+        #Get the current membership index, add one to it, and update the dictionary parameter
         index = self.G.nodes[node]["Current Membership Index"]
         new_index = index + 1
         self.G.nodes[node].update({"Current Membership Index": new_index})
@@ -120,28 +153,45 @@ class dynamic_stochastic_block_model:
         memberships = self.get_node_memberships(node)
         self.G.nodes[node].update({"block": memberships[new_index]})
 
+        # The node now has it's new block membership, and the edges will be added based upon the network parameters
         self.update_edges(node)
 
+        # If the user has specfied a command to be executed upon migrations, then it will be executed
         if self.custom_migration_behaviour != None:
             self.custom_migration_behaviour(self, node)
     
     def update_edges(self, node):
+        """Removes all edges from a nodes and added new edges based upon the networks edge probabilities
+        
+        Arguments:
+            node {str, int, float} -- The dictionary key of the node
+        """
         #Remove all the edges from the node
         neighbours = list(self.G.neighbors(node))
         [self.G.remove_edge(node, connected_node) for connected_node in neighbours]
 
+        # Get the block membership of the node
         node_membership = self.get_node_current_block(node)
+
+        # Loop over every other node in the network
         for potential_neighbour in self.G.nodes:
             if potential_neighbour != node:
-
+                
+                # Get the block membership of the other nodes in the network
                 potential_neighbour_membership = self.get_node_current_block(potential_neighbour)
 
+                #Based upon the returned block memberships, we perform a bernoulli trial and add an edge
                 edge_forming_prob = self.p[node_membership][potential_neighbour_membership]
 
                 if np.random.binomial(1, edge_forming_prob) == 1:
                     self.G.add_edge(node, potential_neighbour)
-            
+
     def increment_network(self, increment_length):
+        """Increment the network foraward in time
+        
+        Arguments:
+            increment_length {int, float} -- The length of time to move the network forward
+        """
         self.time += increment_length
 
         #Which nodes need to have a migration?
