@@ -6,24 +6,29 @@ from SellkeSimulation.EpidemicSimulation import epidemic_data
 
 
 class hazard_class:
-    '''
-    This class handles all the calculations associated with hazard functions.
-
-    Particular duties include:
-    hazard rate evaluation
-    hazard rate integration
-    producing the cumulative hazard vector
-    '''
+    """For a specified hazard function, this class manages calculations of useful quantities"""
 
     def __init__(self, hazard_function):
+        """Initialises the class
+        
+        Arguments:
+            hazard_function {function} -- A function of the form f(t)
+        """
         self.hazard_function = hazard_function
 
     def hazard(self, t, t_end):
-        '''
-        A housekeeping variant of the hazard function.
-        Returns 0 if t is less than 0, truncates to 0 after t_end
-        If no hazard rate was specified, returns 1 so the system defaults to exponential waiting times.
-        '''
+        """Returns a variant of the hazard rate function which rounds negative values up to 0.
+
+        If t > t_end then it also returns 0.
+        
+        Arguments:
+            t {int, float} -- evalutate the hazard rate at this t
+            t_end {int, float} -- Cut-off value to return 0, typically set to the when the infection ends
+        
+        Returns:
+            f(t)
+        """
+
         self.t_end = t_end
         if t < 0 or t > t_end:
             return 0
@@ -36,36 +41,13 @@ class hazard_class:
             else:
                 return temp
 
-    def total_hazard_function(self, t, T_endpoints):
-        '''
-        Not in use, although for visualisation purposes I intend to keep it in here, as I would like to plot the hazard rate over time.
-
-        Given a predefined hazard function, an input time, and the lengths of the infectious periods
-        The function calculates the rate at which the hazard is emitted at time t, assuming they were all intially infected
-
-        Designed as an input function for the BVP Solver, which doesn't currently work
-        '''
-        self.T_endpoints = T_endpoints
-        total_hazard_rate = 0
-        for i in range(len(T_endpoints)):
-            total_hazard_rate = total_hazard_rate + \
-                self.hazard(t, T_endpoints[i])
-        return total_hazard_rate
-
-    def integrate_hazard(self, t_end):
-        '''
-        Integrate a hazard function
-        '''
-        def f(t): return self.hazard(t, t_end)
-        integral = spi.quad(f, 0, t_end)
-        return integral[0]
-
     def increment_hazard(self, t_0, t_1, end_of_infection_time):
-        """Integrates the hazard between the times of t_0 and t_1, with t_0 < t_1
-
+        """Integrates the hazard function over the domain [t_0, t_1]
+        
         Arguments:
             t_0 {float} -- The first timepoint
-            t_1 {float} -- The seconde timepoint
+            t_1 {float} -- The second timepoint
+            end_of_infection_time {float} -- The time at which a nodes infection will end. This is required so that values after this time are returned as 0
         """
         def f(t): return self.hazard(t, end_of_infection_time)
         hazard_emitted = spi.quad(f, t_0, t_1)
@@ -74,94 +56,98 @@ class hazard_class:
 
 
 class complex_epidemic_simulation(epidemic_data):
-    '''
-    This is the class we use to simulate Sellke on a network
+    """This class manages the simulation of the epidemic and dynamic network behavior."""
 
-    I think it's possible to run this by calling the existing sellke code
+    def __init__(self, G, beta, infection_period_parameters, initial_infected, time_increment, max_iterations, hazard_rate=None,
+                 infection_period_distribution=None, SIS = False, increment_network = None, custom_behaviour = None):
+        """This class manages the simulation of the epidemic and the simulation of the dynamic network (if the network is dynamic).
+        If the network is static, then
+        
+        Arguments:
+            G {Networkx.graph} -- A NetworkX graph object
+            beta {float} -- The thinning parameter 
+            infection_period_parameters {list} -- A list of parameters for the infection period distribution
+            initial_infected {int, list} -- [description]
+            time_increment {float} -- The length of the time step of the simulation
+            max_iterations {int} -- The maximum number of iterations that will be performed
+        
+        Keyword Arguments:
+            hazard_rate {function} -- A function of the form f(x) (default: f(x) = 1)
+            infection_period_distribution {function} -- A numpy random number distributon (default: {None})
+            SIS {bool} -- Boolean on whether the epidemic is SIS, if not it will be treated as SIR (default: False)
+            increment_network {method} -- A method of the form increment_network(increment_length). This method will be called during the simulation to move the network forward by the network_increment.
+            custom_behaviour {function} -- Allows users to execute custom behaviour during the simulation. This is useful for customising the simulation to your own purposes, such as treatment scenarios. (default: {None})
 
-    If you think about it, when we determine whether a susceptible node becomes infected, we are consider the sellke general population problem
-    with 1 susceptible and the number of initial infected equal to the number of infected connected via edge
-    You know they got infected if he final size of the epidemic is 1 greater than the initial starting size.
-
-    Alternatively, when a node gets infected, we immediately calculate their total hazard contribution.
-
-    This way, when we calculate whether a susceptible becomes infected we can simply sum over the infected neighbours.
-
-    ::Inputs::
-    G a network x graph object
-    '''
-
-    def __init__(self, G, beta, I_parameters, initial_infected, time_increment, max_iterations, hazard_rate=None,
-                 infection_period_distribution=None, SIS = None, increment_network = None,
-                 custom_behaviour = None, dynamic_network = None):
-        #variables for controlling the iteration
-        self.iteration = 0
-        self.epidemic_ended = False
-        self.max_iterations_reached = False
+        TODO: Remove the beta parameter, too confusing
+        """
 
         self.G = G
-        self.node_keys = list(G.nodes())
         self.beta = beta
-        self.custom_behaviour = custom_behaviour
-        self.dynamic_network = dynamic_network
-        self.increment_network = increment_network
-        self.time_increment = time_increment
+        self.infection_period_parameters = infection_period_parameters
         self.inf_starting = initial_infected
-        self.I_parameters = I_parameters
+        self.time_increment = time_increment
+        self.max_iterations = max_iterations
         self.hazard_rate = hazard_rate
+        self.SIS = SIS
+        self.increment_network = increment_network
+        self.custom_behaviour = custom_behaviour
+
         self.N = nx.number_of_nodes(self.G)
         self.data_structure = epidemic_data(
-            G, initial_infected, 100, infection_period_distribution, I_parameters)
-        self.SIS = SIS
-        if self.SIS == None:
-            self.SIS = False
+            G, initial_infected, 100, infection_period_distribution, infection_period_parameters)
         self.epi_data = self.data_structure.epi_data
-        self.new_infections = self.infected_nodes[:]
-        self.time = 0
         self.hazard = hazard_class(self.hazard_rate)
-        self.max_iterations = max_iterations
-
-        #Data for the results
-        self.data_time = [0]
-        self.data_susceptible_counts = [len(self.susceptible_nodes)]
-        self.data_infected_counts = [len(self.infected_nodes)]
-        self.data_recovered_counts = [len(self.recovered_nodes)]
-
-        self.data_susceptible_nodes = [self.susceptible_nodes]
-        self.data_infected_nodes = [self.infected_nodes]
-        self.data_recovered_nodes = [self.recovered_nodes]
 
     @property
     def infected_nodes(self):
-        """Returns the calls the data structure to return the set of infected
+        """Returns a list of dictionary keys for the nodes who are currently infected.
+        
+        Returns:
+            [list] -- List of infected nodes
         """
         return [nodes for nodes in self.data_structure.epi_data if self.data_structure.epi_data[nodes]["Infection Stage"] == "Infected"]
 
     @property
     def susceptible_nodes(self):
-        """Returns the calls the data structure to return the set of susceptibles
+        """Returns a list of dictionary keys for the nodes who are currently susceptible.
+        
+        Returns:
+            [list] -- List of susceptible nodes
         """
         return [nodes for nodes in self.epi_data if self.epi_data[nodes]["Infection Stage"] == "Susceptible"]
 
     @property
     def infectious_periods(self):
+        """Returns a list of the infectious periods for all nodes.
+        
+        This will include susceptible nodes, for whom this will be the length of the infectious period the next time they are infected.
+        
+        Returns:
+            [list] -- A list of infectious periods
+        """
         # There's a function that generates the infection periods as it is shared between several class objects
         return [self.epi_data[node]["Infection Period"] for node in self.epi_data]
 
     @property
     def recovered_nodes(self):
-        """Returns the calls the data structure to return the set of susceptibles
+        """Returns a list of dictionary keys for the nodes who are currently recovered.
+        
+        Returns:
+            [list] -- List of recovered nodes
         """
         return [nodes for nodes in self.epi_data if self.epi_data[nodes]["Infection Stage"] == "Recovered"]
 
     @property
     def exposure_level(self):
-        """Call to the data structure to return the current exposure level for every node in the network.
+        """Returns a list of the current exposure level of every node in the network.
+        
+        Returns:
+            [list] -- A list of node exposure levels
         """
         return [self.epi_data[node]["Exposure Level"] for node in self.epi_data]
 
     def updates_exposure_levels(self):
-        """Updates the exposure levels of nodes that are connected to newly infected nodes. This should only affect susceptible nodes.
+        """Loops over all infected nodes and updates the exposure levels of connected susceptible nodes.
         """
 
         for node in self.infected_nodes:
@@ -181,14 +167,17 @@ class complex_epidemic_simulation(epidemic_data):
                     exposed_node, emitted_hazard)
 
     def determine_new_infections(self):
-        """The infected list gets updated based upon their exposure level.
+        """Compares a nodes exposure level to it's resistance and determines which nodes have been infecetd during this step of the iteration.
         """
         self.new_infections = [susceptible for susceptible in self.susceptible_nodes if (
             self.epi_data[susceptible]["Resistance"] < self.epi_data[susceptible]["Exposure Level"])]
         self.update_infection_stage(self.new_infections, "Infected", self.time)
 
     def determine_recoveries(self):
-        """Nodes if the amount of time since the infected started is greater than the length of the infection period, the nodes status changes to Recovered.
+        """For nodes whose infections have ended, this method updates to the appropiate status.
+        
+        Raises:
+            ValueError: Raises an error if the SIS is not a boolean
         """
         recoveries = [infected for infected in self.infected_nodes
                     if self.epi_data[infected]["Infection Stage Started"] + self.epi_data[infected]["Infection Period"] < self.time]
@@ -201,6 +190,13 @@ class complex_epidemic_simulation(epidemic_data):
             raise ValueError("SIS parameter not set to true or false.")
 
     def perform_iteration(self):
+        """Executes one step of the simulation in the following order:
+        1) Update the network structure
+        2) Determine which infections have ended
+        3) Update node exposure levels
+        4) Determine new infection
+        5) Perform custom behaviours
+        """
         
         #Computation Steps
         if self.increment_network != None:
@@ -235,11 +231,27 @@ class complex_epidemic_simulation(epidemic_data):
 
 
     def iterate_epidemic(self):
-        """Control structure for looping the epidemic until it completes. Only useful for estimating the final size of an SIR epidemic.
+        """Performs iterations of the simulation until either there is epidemic die out, or the maximum number of iterations is reached.
         """
         # The set of infected at the previous step of the iteration
         # The nodes whose neighbours exposure levels will be updated.
         #We will be recording data into these lists.
+
+        #variables for controlling the iteration
+        self.time = 0
+        self.iteration = 0
+        self.epidemic_ended = False
+        self.max_iterations_reached = False
+
+                #Data for the results
+        self.data_time = [0]
+        self.data_susceptible_counts = [len(self.susceptible_nodes)]
+        self.data_infected_counts = [len(self.infected_nodes)]
+        self.data_recovered_counts = [len(self.recovered_nodes)]
+
+        self.data_susceptible_nodes = [self.susceptible_nodes]
+        self.data_infected_nodes = [self.infected_nodes]
+        self.data_recovered_nodes = [self.recovered_nodes]
 
         while (self.epidemic_ended == False) and (self.max_iterations_reached == False):
             self.perform_iteration()
