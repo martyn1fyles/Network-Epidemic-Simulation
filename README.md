@@ -1,3 +1,7 @@
+[![Documentation Status](https://readthedocs.org/projects/network-epidemic-simulation/badge/?version=latest)](https://network-epidemic-simulation.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/martyn1fyles/Sellke-Networks.svg?branch=master)](https://travis-ci.org/martyn1fyles/Sellke-Networks)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/martyn1fyles/Sellke-Networks/master)
+
 ## Network-Epidemic-Simulation
 Network-Epidemic-Simulation is a project which aims to allow for easy modelling of complex infectious epidemics on networks and the effectiveness of interventions.
 
@@ -6,9 +10,6 @@ By complex, we aim to provide support for the following features:
 2) Static and Dynamic Networks. For the research which motivated the development of this software, a key feature was that the network must evolve over time, so that is supported and some basic visualisation tools provided.
 3) User-defined treatment scenarios. As the key goal of epidemiological modelling is to evaluate the effectiveness of different treatment scenarios, the system for implementing these is quick and customisable. This system can also be dependent on events occurring in the dynamic network. For example, a node may enter a hospital and receive treatment, which updating it's contact network to include those in the hospital
 4) Support for many different categories of epidemics. Currently we support SI, SIS and SIR. However, we have plans to extend to a versatile class system, allowing for any possible epidemic model.
-
-[![Build Status](https://travis-ci.org/martyn1fyles/Sellke-Networks.svg?branch=master)](https://travis-ci.org/martyn1fyles/Sellke-Networks)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/martyn1fyles/Sellke-Networks/master)
 
 # Current Features
 1) Time-varying infection profiles, leading to non-markovian epidemics.
