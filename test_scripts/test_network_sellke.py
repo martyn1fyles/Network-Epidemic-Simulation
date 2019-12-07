@@ -12,7 +12,7 @@ def fixed_length(para, n): return np.array([5]*n)
 
 test_sim_2 = complex_epidemic_simulation(G=G_test,
                                          beta=0.008,
-                                         I_parameters=1.5,
+                                         infection_period_parameters=1.5,
                                          initial_infected=[0, 1, 2, 3, 4],
                                          infection_period_distribution=fixed_length,
                                          time_increment=0.1,
@@ -27,7 +27,7 @@ def test_initialise_infection_list():
     test_list = [1, 2, 3, 4, 5]
     epidemic_simulation = complex_epidemic_simulation(G=G_test,
                                                       beta=0.008,
-                                                      I_parameters=1.5,
+                                                      infection_period_parameters=1.5,
                                                       initial_infected=test_list,
                                                       time_increment=0.1,
                                                       max_iterations=1000)
@@ -42,7 +42,7 @@ def test_determine_new_infections():
 
     test_sim_2 = complex_epidemic_simulation(G=G_test,
                                              beta=0.008,
-                                             I_parameters=1.5,
+                                             infection_period_parameters=1.5,
                                              initial_infected=[0, 1, 2, 3, 4],
                                              infection_period_distribution=fixed_length,
                                              time_increment=0.1,
@@ -88,7 +88,7 @@ def test_node_list_complex():
     G_test_lattice = nx.grid_2d_graph(1, 1)
     my_epidemic = complex_epidemic_simulation(G_test_lattice,
                                               beta=0.008,
-                                              I_parameters=1.5,
+                                              infection_period_parameters=1.5,
                                               initial_infected=1,
                                               time_increment=0.1,
                                               max_iterations=1000)
@@ -102,7 +102,7 @@ def test_complex_node_list_iteration():
     G_test_lattice = nx.grid_2d_graph(2, 2)
     my_epidemic = complex_epidemic_simulation(G_test_lattice,
                                               beta=100,
-                                              I_parameters=1,
+                                              infection_period_parameters=1,
                                               initial_infected=1,
                                               time_increment=0.1,
                                               max_iterations=1000)
@@ -116,7 +116,7 @@ def test_complex_node_list_iteration_larger_network():
     G_test_lattice = nx.grid_2d_graph(10, 10)
     my_epidemic = complex_epidemic_simulation(G_test_lattice,
                                               beta=100,
-                                              I_parameters=1,
+                                              infection_period_parameters=1,
                                               initial_infected=1,
                                               time_increment=0.1,
                                               max_iterations=1000)
@@ -128,7 +128,7 @@ def test_complex_node_list_iteration_larger_network():
 #    """We check that the iteration can be successfully performed over a complex node list
 #    """
 #    G_test_lattice = nx.grid_2d_graph(10,10)
-#    my_epidemic = complex_epidemic_simulation(G_test_lattice,beta = 100, I_parameters = 1, initial_infected = (1,1))
+#    my_epidemic = complex_epidemic_simulation(G_test_lattice,beta = 100, infection_period_parameters = 1, initial_infected = (1,1))
 #    my_epidemic.iterate_epidemic()
 #    assert my_epidemic.final_size > 4
 #    assert my_epidemic.time > 3

@@ -66,7 +66,7 @@ class SIR_Selke:
     Arguments
     N = total size of population
     beta = force of infection
-    I_parameters = either a float, int, or list of parameters that are passed to a numpy distribution function
+    infection_period_parameters = either a float, int, or list of parameters that are passed to a numpy distribution function
     
 
     Choosing a non-markovian distribution:
@@ -82,11 +82,11 @@ class SIR_Selke:
     '''
     
     #We use the init function to assign values to object that are necessary to do when the object is run
-    def __init__(self, N, beta, I_parameters, initial_infected, hazard_rate = None, infection_period_distribution = None):
+    def __init__(self, N, beta, infection_period_parameters, initial_infected, hazard_rate = None, infection_period_distribution = None):
         self.N = N
         self.beta = beta
         self.inf_starting = initial_infected
-        self.I_parameters = I_parameters
+        self.infection_period_parameters = infection_period_parameters
         self.inf_period_dist = infection_period_distribution
         self.hazard_rate = hazard_rate
         self.generate_infection_periods()
@@ -146,21 +146,21 @@ class SIR_Selke:
         '''
 
         if self.inf_period_dist is None:
-            if type(self.I_parameters) == int or type(self.I_parameters) == float:
-                self.inf_periods = np.random.exponential(self.I_parameters,self.N)
+            if type(self.infection_period_parameters) == int or type(self.infection_period_parameters) == float:
+                self.inf_periods = np.random.exponential(self.infection_period_parameters,self.N)
             else:
                 print("Put something here to stop everything else going ahead because te parameters are not correct.")
         else:
-            if type(self.I_parameters) == int or type(self.I_parameters) == float:
-                self.inf_periods = self.inf_period_dist(self.I_parameters, self.N)
-            elif len(self.I_parameters) == 2:
-                self.inf_periods = self.inf_period_dist(self.I_parameters[0]
-                                                ,self.I_parameters[1]
+            if type(self.infection_period_parameters) == int or type(self.infection_period_parameters) == float:
+                self.inf_periods = self.inf_period_dist(self.infection_period_parameters, self.N)
+            elif len(self.infection_period_parameters) == 2:
+                self.inf_periods = self.inf_period_dist(self.infection_period_parameters[0]
+                                                ,self.infection_period_parameters[1]
                                                 ,self.N)
-            elif len(self.I_parameters) == 3:
-                self.inf_periods = self.inf_period_dist(self.I_parameters[0]
-                                                ,self.I_parameters[1]
-                                                ,self.I_parameters[2]
+            elif len(self.infection_period_parameters) == 3:
+                self.inf_periods = self.inf_period_dist(self.infection_period_parameters[0]
+                                                ,self.infection_period_parameters[1]
+                                                ,self.infection_period_parameters[2]
                                                 ,self.N)
             else:
                 print("There is something incorrect with the parameters.")
