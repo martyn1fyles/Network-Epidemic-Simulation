@@ -92,6 +92,7 @@ class complex_epidemic_simulation(epidemic_data):
         self.increment_network = increment_network
         self.custom_behaviour = custom_behaviour
 
+        self.time = 0
         self.N = nx.number_of_nodes(self.G)
         self.data_structure = epidemic_data(
             G, initial_infected, 100, infection_period_distribution, infection_period_parameters)
@@ -238,7 +239,7 @@ class complex_epidemic_simulation(epidemic_data):
         #We will be recording data into these lists.
 
         #variables for controlling the iteration
-        self.time = 0
+        
         self.iteration = 0
         self.epidemic_ended = False
         self.max_iterations_reached = False

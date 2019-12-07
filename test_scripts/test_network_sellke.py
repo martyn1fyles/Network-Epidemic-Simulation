@@ -49,10 +49,11 @@ def test_determine_new_infections():
                                              max_iterations=1000)
 
     test_copy = test_sim_2
+    nodes = list(test_copy.G.node())
     [test_copy.epi_data[node].update({"Resistance": 0.039})
-     for node in test_copy.node_keys[0:10]]
+     for node in nodes[0:10]]
     [test_copy.epi_data[node].update({"Resistance": 100})
-     for node in test_copy.node_keys[10:200]]
+     for node in nodes[10:200]]
     test_copy.iterate_epidemic()
     lifetime_infections = [node for node in test_copy.epi_data if test_copy.epi_data[node]["Times Infected"] == 1]
     assert lifetime_infections == list(range(10))
@@ -61,10 +62,13 @@ def test_determine_new_infections():
 def test_iterate_epidemic_successfully():
     """Tests the control structure for iterating epidemics."""
     test_copy = test_sim_2
+    
+    nodes = list(test_copy.G.node())
+
     [test_copy.epi_data[node].update({"Resistance": 0.039})
-     for node in test_copy.node_keys[0:10]]
+     for node in nodes[0:10]]
     [test_copy.epi_data[node].update({"Resistance": 1000})
-     for node in test_copy.node_keys[10:200]]
+     for node in nodes[10:200]]
     test_copy.determine_new_infections()
     test_copy.iterate_epidemic()
     assert test_copy.final_size == 10
@@ -72,11 +76,14 @@ def test_iterate_epidemic_successfully():
 
 
 def test_iterate_epidemic_real_epidemic():
-    npr.seed(1)
+    npr.seed(1)    
+
+    nodes = list(test_copy.G.node())
+
     [test_copy.epi_data[node].update({"Resistance": 0.039})
-     for node in test_copy.node_keys[0:10]]
+     for node in nodes[0:10]]
     [test_copy.epi_data[node].update({"Resistance": 0.21})
-     for node in test_copy.node_keys[10:20]]
+     for node in nodes[10:20]]
     test_copy.determine_new_infections()
     test_copy.iterate_epidemic()
     assert test_copy.time > 1
