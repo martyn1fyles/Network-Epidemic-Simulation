@@ -2,7 +2,7 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from SellkeSimulation.Simulation import complex_epidemic_simulation
+from Simulation.Simulation import complex_epidemic_simulation
 
 G_test = nx.complete_graph(200)
 
@@ -68,7 +68,7 @@ def test_iterate_epidemic_successfully():
     test_copy.determine_new_infections()
     test_copy.iterate_epidemic()
     assert test_copy.final_size == 10
-    assert test_copy.iterations == 61
+    assert test_copy.iteration == 61
 
 
 def test_iterate_epidemic_real_epidemic():

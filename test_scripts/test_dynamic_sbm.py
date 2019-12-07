@@ -1,5 +1,5 @@
 #Test dynamic_sbm
-from SellkeSimulation.DynamicNetworks import dynamic_stochastic_block_model
+from Simulation.DynamicNetworks import dynamic_stochastic_block_model
 
 sizes = [100, 100, 100]
 probs = [[0.4, 0.001, 0.001],[0.001, 0.4, 0.001], [0.001, 0.001, 0.4]]

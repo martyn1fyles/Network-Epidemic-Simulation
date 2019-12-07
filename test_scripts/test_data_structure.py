@@ -2,7 +2,7 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from SellkeSimulation.EpidemicSimulation import epidemic_data
+from Simulation.EpidemicSimulation import epidemic_data
 
 G_complete = nx.complete_graph(10)
 G_lattice = nx.grid_2d_graph(5, 5)
