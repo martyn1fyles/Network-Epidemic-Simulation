@@ -1,5 +1,5 @@
-## Sellke-Networks
-Sellke-Networks is a project which aims to allow for easy modelling of complex infectious epidemics on networks.
+## Network-Epidemic-Simulation
+Network-Epidemic-Simulation is a project which aims to allow for easy modelling of complex infectious epidemics on networks and the effectiveness of interventions.
 
 By complex, we aim to provide support for the following features:
 1) Non-markovian epidemics, where the time-until infection may follow any other distribution
@@ -11,7 +11,7 @@ By complex, we aim to provide support for the following features:
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/martyn1fyles/Sellke-Networks/master)
 
 # Current Features
-1) Time-varying infection profiles, leading to non-markovian epidemics
+1) Time-varying infection profiles, leading to non-markovian epidemics.
 2) Static networks and dynamic networks
 3) A dynamic networks event system, where events in the dynamic network can effect the epidemic
 4) The most common epidemic classes
