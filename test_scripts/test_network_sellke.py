@@ -49,7 +49,7 @@ def test_determine_new_infections():
                                              max_iterations=1000)
 
     test_copy = test_sim_2
-    nodes = list(test_copy.G.node())
+    nodes = list(test_copy.G.nodes())
     [test_copy.epi_data[node].update({"Resistance": 0.039})
      for node in nodes[0:10]]
     [test_copy.epi_data[node].update({"Resistance": 100})
@@ -63,7 +63,7 @@ def test_iterate_epidemic_successfully():
     """Tests the control structure for iterating epidemics."""
     test_copy = test_sim_2
     
-    nodes = list(test_copy.G.node())
+    nodes = list(test_copy.G.nodes())
 
     [test_copy.epi_data[node].update({"Resistance": 0.039})
      for node in nodes[0:10]]
@@ -78,7 +78,7 @@ def test_iterate_epidemic_successfully():
 def test_iterate_epidemic_real_epidemic():
     npr.seed(1)    
 
-    nodes = list(test_copy.G.node())
+    nodes = list(test_copy.G.nodes())
 
     [test_copy.epi_data[node].update({"Resistance": 0.039})
      for node in nodes[0:10]]
