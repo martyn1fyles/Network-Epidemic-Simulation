@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-   name='Simulation',
+   name='SellkeSimulation',
    version='alpha',
    description='Performs Sellke Type simulations.',
    license="GNU",
