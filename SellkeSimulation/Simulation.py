@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import networkx as nx
-from Simulation.EpidemicSimulation import epidemic_data
+from SellkeSimulation.EpidemicSimulation import epidemic_data
 
 
 class hazard_class:
