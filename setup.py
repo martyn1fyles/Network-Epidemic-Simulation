@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-   name='SellkeSimulation',
+   name='NetworkEpidemicSimulation',
    version='alpha',
    description='Performs Sellke Type simulations.',
    license="GNU",
@@ -9,9 +9,7 @@ setup(
    #author='Man Foo',
    #author_email='foomail@foo.com',
    #url="http://www.foopackage.com/",
-   packages=['Simulation'],  #same as name
+   packages=['NetworkEpidemicSimulation'],  #same as name
    install_requires=['networkx', 'numpy', 'scipy', 'matplotlib', 'pytest'], #external packages as dependencies
-   scripts=[
-            'SellkeSimulation/Simulation.py'
-           ]
+   py_modules = ['NetworkEpidemicSimulation/EpidemicSimulation', 'NetworkEpidemicSimulation/Simulation']
 )

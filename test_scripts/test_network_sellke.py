@@ -2,7 +2,7 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from SellkeSimulation.Simulation import complex_epidemic_simulation
+from NetworkEpidemicSimulation.Simulation import complex_epidemic_simulation
 
 G_test = nx.complete_graph(200)
 

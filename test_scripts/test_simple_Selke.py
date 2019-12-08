@@ -1,5 +1,5 @@
-from SellkeSimulation.HomogenousEpidemic import SIR_Selke
-from SellkeSimulation.HomogenousEpidemic import hazard_class
+from NetworkEpidemicSimulation.HomogenousEpidemic import SIR_Selke
+from NetworkEpidemicSimulation.HomogenousEpidemic import hazard_class
 import numpy.random as npr
 import numpy as np
 from pytest import raises
