@@ -3,7 +3,7 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from Simulation.Simulation import hazard_class
+from SellkeSimulation.Simulation import hazard_class
 from pytest import approx
 
 def test_hazard_increment():

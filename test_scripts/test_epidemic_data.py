@@ -3,7 +3,7 @@
 import networkx as nx
 import numpy as np
 import numpy.random as npr
-from Simulation.EpidemicSimulation import epidemic_data
+from SellkeSimulation.EpidemicSimulation import epidemic_data
 
 def test_initialise_data_structure():
     """Tests that the output is as expected for two types of networks.
