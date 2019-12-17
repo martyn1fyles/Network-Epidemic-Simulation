@@ -73,7 +73,7 @@ class complex_epidemic_simulation(epidemic_data):
         
         Keyword Arguments:
             hazard_rate {function} -- A function of the form f(x) (default: f(x) = 1)
-            infection_period_distribution {function} -- A numpy random number distributon (default: {None})
+            infection_period_distribution {function} -- A numpy random number distribution (default: {None})
             SIS {bool} -- Boolean on whether the epidemic is SIS, if not it will be treated as SIR (default: False)
             increment_network {method} -- A method of the form increment_network(increment_length). This method will be called during the simulation to move the network forward by the network_increment.
             custom_behaviour {function} -- Allows users to execute custom behaviour during the simulation. This is useful for customising the simulation to your own purposes, such as treatment scenarios. (default: {None})
@@ -168,14 +168,14 @@ class complex_epidemic_simulation(epidemic_data):
                     exposed_node, emitted_hazard)
 
     def determine_new_infections(self):
-        """Compares a nodes exposure level to it's resistance and determines which nodes have been infecetd during this step of the iteration.
+        """Compares a nodes exposure level to it's resistance and determines which nodes have been infected during this step of the iteration.
         """
         self.new_infections = [susceptible for susceptible in self.susceptible_nodes if (
             self.epi_data[susceptible]["Resistance"] < self.epi_data[susceptible]["Exposure Level"])]
         self.update_infection_stage(self.new_infections, "Infected", self.time)
 
     def determine_recoveries(self):
-        """For nodes whose infections have ended, this method updates to the appropiate status.
+        """For nodes whose infections have ended, this method updates to the appropriate status.
         
         Raises:
             ValueError: Raises an error if the SIS is not a boolean
@@ -196,7 +196,7 @@ class complex_epidemic_simulation(epidemic_data):
         2) Determine which infections have ended
         3) Update node exposure levels
         4) Determine new infection
-        5) Perform custom behaviours
+        5) Perform custom behaviour
         """
         
         #Computation Steps
