@@ -74,28 +74,7 @@ def test_repeated_sim():
     simulation = SIR_Selke(200, 0.008, 1, 5)
     simulation.sim_final_size(2)
 
-def test_hazard_well_behaved():
-    '''
-    Tests for out of bounds behaviour
-    negative time value returns
-    valid time value returns correct value
-    time value after the end time point returns 0 
-    '''
-    def my_hazard_fn(t): return 4*t
-    my_hazard = hazard_class(hazard_function= my_hazard_fn)
-    t_end = 10
-    assert my_hazard.hazard(-1,t_end) == 0
-    assert my_hazard.hazard(1,t_end) == 4
-    assert my_hazard.hazard(11,t_end) == 0
 
-def test_negative_hazard_func():
-    '''
-    Checks that the hazard class maps negative values to 0.
-    Negative hazard does not make sense
-    '''
-    def my_hazard_fn(t): return -t
-    my_hazard = hazard_class(hazard_function= my_hazard_fn)
-    assert my_hazard.hazard(1,10) == 0
 
 def test_total_hazard_function():
     '''
@@ -122,13 +101,6 @@ def test_total_hazard_function():
     #Tests that the cut off has happened at t = 2
     assert my_hazard.total_hazard_function(2.5, infection_lengths) == 0
 
-def test_hazard_integral():
-    '''tests the hazard integrator against a predetermined value'''
-
-    def my_hazard(t): return 4*t
-    my_hazard = hazard_class(hazard_function = my_hazard)
-    assert my_hazard.integrate_hazard(10) == 200
-
 def test_final_size_using_hazard_function():
     '''
     Tests whether the final size of the epidemic is the same when using the
@@ -145,3 +117,34 @@ def test_final_size_using_hazard_function():
     test_var_2 = simulation.compute_final_size()
 
     assert test_var_1 == test_var_2
+
+def test_hazard_well_behaved():
+    '''
+    Tests for out of bounds behaviour
+    negative time value returns
+    valid time value returns correct value
+    time value after the end time point returns 0 
+    '''
+    def my_hazard_fn(t): return 4*t
+    my_hazard = hazard_class(hazard_function= my_hazard_fn)
+    t_end = 10
+    assert my_hazard.hazard(-1,t_end) == 0
+    assert my_hazard.hazard(1,t_end) == 4
+    assert my_hazard.hazard(11,t_end) == 0
+
+
+def test_negative_hazard_func():
+    '''
+    Checks that the hazard class maps negative values to 0.
+    Negative hazard does not make sense
+    '''
+    def my_hazard_fn(t): return -t
+    my_hazard = hazard_class(hazard_function= my_hazard_fn)
+    assert my_hazard.hazard(1,10) == 0
+
+def test_hazard_integral():
+    '''tests the hazard integrator against a predetermined value'''
+
+    def my_hazard(t): return 4*t
+    my_hazard = hazard_class(hazard_function = my_hazard)
+    assert my_hazard.integrate_hazard(10) == 200
