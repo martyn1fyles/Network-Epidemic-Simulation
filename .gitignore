@@ -108,3 +108,4 @@ venv.bak/
 .vscode/settings.json
 .vscode/launch.json
 vs_workspace.code-workspace
+cov.xml
