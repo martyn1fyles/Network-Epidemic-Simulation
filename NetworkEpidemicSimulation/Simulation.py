@@ -9,7 +9,7 @@ class hazard_class:
     """For a specified hazard function, this class manages calculations of useful quantities"""
 
     def __init__(self, hazard_function):
-        """Initialises the class
+        """Initializes the class
         
         Arguments:
             hazard_function {function} -- A function of the form f(t)
@@ -17,12 +17,12 @@ class hazard_class:
         self.hazard_function = hazard_function
 
     def hazard(self, t, t_end):
-        """Returns a variant of the hazard rate function which rounds negative values up to 0.
+        """Returns a variant of the hazard rate function which truncates negative values up to 0.
 
         If t > t_end then it also returns 0.
         
         Arguments:
-            t {int, float} -- evalutate the hazard rate at this t
+            t {int, float} -- evaluate the hazard rate at t
             t_end {int, float} -- Cut-off value to return 0, typically set to the when the infection ends
         
         Returns:
