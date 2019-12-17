@@ -132,7 +132,7 @@ class dynamic_stochastic_block_model:
         Returns:
             list -- A list of nodes keys
         """
-        return [node for node in self.G.nodes if self.get_node_next_migration_time(node) < time]
+        return [node for node in self.G.nodes if self.get_node_next_migration_time(node) < time_limit]
         
     def perform_migration_event(self, node):
         """For a specified node, perform their next migration by updating the nodes dictionary entry, removing all edges and adding new edges based upon the specified probabilities
@@ -156,7 +156,7 @@ class dynamic_stochastic_block_model:
         # The node now has it's new block membership, and the edges will be added based upon the network parameters
         self.update_edges(node)
 
-        # If the user has specfied a command to be executed upon migrations, then it will be executed
+        # If the user has specified a command to be executed upon migrations, then it will be executed
         if self.custom_migration_behaviour != None:
             self.custom_migration_behaviour(self, node)
     
